@@ -1,0 +1,533 @@
+{
+  "site": {
+    "version": 1,
+    "brandName": "裕和堂",
+    "brandEnglish": "YU HE TANG",
+    "tagline": "身心有度，日常有和",
+    "theme": "sage",
+    "hero": {
+      "eyebrow": "东方养护 · 城市慢生活",
+      "title": "留一段时间\n好好照顾自己",
+      "subtitle": "让身体慢下来，让日常多一分从容。",
+      "image": "/media/store-08.webp",
+      "button": "预约一段好时光"
+    },
+    "brandStory": "我们相信，好的养护是日常里的细心关照。以一缕艾香、一盏清茶、一双温暖的手，让熟悉的东方养生，成为当代生活里自在的一部分。",
+    "contact": {
+      "phone": "",
+      "wechat": "",
+      "message": "留下您的预约意向，门店养护老师将与您联系。"
+    },
+    "sections": [
+      {
+        "id": "services",
+        "name": "特色养护",
+        "enabled": true
+      },
+      {
+        "id": "space",
+        "name": "一店一境",
+        "enabled": true
+      },
+      {
+        "id": "products",
+        "name": "东方好物",
+        "enabled": true
+      },
+      {
+        "id": "brand",
+        "name": "关于裕和堂",
+        "enabled": true
+      }
+    ],
+    "services": [
+      {
+        "id": "moxa",
+        "name": "蕲艾温养",
+        "english": "WARMTH OF MUGWORT",
+        "subtitle": "一缕艾香，把温暖留给自己",
+        "category": "艾灸温养",
+        "duration": "60分钟",
+        "image": "/media/moxa.webp",
+        "tag": "招牌养护",
+        "enabled": true,
+        "description": "以温润的艾香开启一段安静时光。到店后由养护老师了解您的日常习惯与体验偏好，沟通适合的服务方式。",
+        "steps": [
+          "一盏暖茶 · 轻声问候",
+          "到店沟通 · 了解偏好",
+          "蕲艾温养 · 静享时光",
+          "日常建议 · 从容离店"
+        ]
+      },
+      {
+        "id": "massage",
+        "name": "经络舒缓",
+        "english": "A MOMENT OF RELEASE",
+        "subtitle": "放下紧绷，找回身体的节奏",
+        "category": "经络舒缓",
+        "duration": "60分钟",
+        "image": "/media/massage.webp",
+        "tag": "人气体验",
+        "enabled": true,
+        "description": "以细致的手法与舒适的节奏，陪您从忙碌中慢下来。服务前充分沟通关注部位、力度与体验偏好。",
+        "steps": [
+          "服务前沟通",
+          "舒适度确认",
+          "手法舒缓体验",
+          "离店关怀"
+        ]
+      },
+      {
+        "id": "foot",
+        "name": "足下轻盈",
+        "english": "LIGHTNESS IN EVERY STEP",
+        "subtitle": "照顾走过许多路的自己",
+        "category": "足部养护",
+        "duration": "45分钟",
+        "image": "/media/foot.webp",
+        "tag": "日常放松",
+        "enabled": true,
+        "description": "把片刻宁静留给双足。在安静的空间中，享受从容的足部养护时光。具体体验内容由到店老师沟通确认。",
+        "steps": [
+          "温茶迎客",
+          "足部舒缓",
+          "力度沟通",
+          "日常养护建议"
+        ]
+      },
+      {
+        "id": "guasha",
+        "name": "东方刮痧",
+        "english": "TRADITION MEETS CARE",
+        "subtitle": "传统手法里的细腻关照",
+        "category": "经络舒缓",
+        "duration": "40分钟",
+        "image": "/media/guasha.webp",
+        "tag": "东方手法",
+        "enabled": true,
+        "description": "用一段专注的时间感受传统养护。体验前由老师沟通个人情况及注意事项，以舒适、适合的方式开展服务。",
+        "steps": [
+          "需求与情况沟通",
+          "体验方式确认",
+          "传统手法养护",
+          "体验后关怀"
+        ]
+      }
+    ],
+    "stores": [
+      {
+        "id": "bai-le-men",
+        "name": "百乐门店",
+        "district": "静安区",
+        "image": "/media/store-08.webp",
+        "address": "上海市静安区 · 百乐门商圈（演示地址，待门店确认）",
+        "hours": "10:00–22:00",
+        "phone": "",
+        "tag": "东方雅境",
+        "description": "月洞门、柔和的窗光与一盏清茶，在城市的繁忙中，为自己留一处安静。",
+        "enabled": true,
+        "gallery": [
+          "/media/store-08.webp",
+          "/media/store-08-alt.webp"
+        ]
+      },
+      {
+        "id": "sichuan",
+        "name": "四川北路店",
+        "district": "虹口区",
+        "image": "/media/store-06.webp",
+        "address": "上海市虹口区 · 四川北路商圈（演示地址，待门店确认）",
+        "hours": "10:00–22:00",
+        "phone": "",
+        "tag": "城市窗景",
+        "description": "在通透的城市窗景里，享受安静的休憩时刻。",
+        "enabled": true,
+        "gallery": [
+          "/media/store-06.webp",
+          "/media/store-06-alt.webp"
+        ]
+      },
+      {
+        "id": "changde",
+        "name": "常德路店",
+        "district": "静安区",
+        "image": "/media/store-07.webp",
+        "address": "上海市静安区 · 常德路商圈（演示地址，待门店确认）",
+        "hours": "10:00–22:00",
+        "phone": "",
+        "tag": "茶席草本",
+        "description": "茶席、木柜与草本气息，延续熟悉的东方养护日常。",
+        "enabled": true,
+        "gallery": [
+          "/media/store-07.webp",
+          "/media/store-07-alt.webp"
+        ]
+      },
+      {
+        "id": "shanghai",
+        "name": "上海中心店",
+        "district": "浦东新区",
+        "image": "/media/store-02.webp",
+        "address": "上海市浦东新区 · 陆家嘴商圈（演示地址，待门店确认）",
+        "hours": "10:00–22:00",
+        "phone": "",
+        "tag": "静谧茶境",
+        "description": "用一盏清茶与细致的服务，为高楼中的日常添一份从容。",
+        "enabled": true,
+        "gallery": [
+          "/media/store-02.webp",
+          "/media/store-02-alt.webp"
+        ]
+      },
+      {
+        "id": "meihua",
+        "name": "梅花路店",
+        "district": "浦东新区",
+        "image": "/media/store-01.webp",
+        "address": "上海市浦东新区 · 梅花路商圈（演示地址，待门店确认）",
+        "hours": "10:00–22:00",
+        "phone": "",
+        "tag": "温润木色",
+        "description": "简净的木色与柔和的光线，让照顾自己成为一种自然的习惯。",
+        "enabled": true,
+        "gallery": [
+          "/media/store-01.webp",
+          "/media/store-01-alt.webp"
+        ]
+      }
+    ],
+    "products": [
+      {
+        "id": "aged-moxa",
+        "name": "蕲春陈艾",
+        "subtitle": "一株好艾，一份温润",
+        "image": "/media/moxa-product.webp",
+        "category": "草本本源",
+        "description": "从湖北蕲春的艾田到门店日常，感受草本的本真气息。产品信息与具体使用方式，请向门店老师了解。",
+        "enabled": true
+      },
+      {
+        "id": "herbal-daily",
+        "name": "草本日常",
+        "subtitle": "把自然，带回生活",
+        "image": "/media/herbal.webp",
+        "category": "日常养护",
+        "description": "让细致的关照成为日常。展示内容供品牌体验演示，具体品类与信息以门店确认为准。",
+        "enabled": true
+      }
+    ],
+    "galleryGroups": [
+      {
+        "id": "welcome",
+        "name": "迎客与茶席",
+        "images": [
+          "/media/store-08.webp",
+          "/media/store-07.webp",
+          "/media/store-02.webp"
+        ]
+      },
+      {
+        "id": "quiet",
+        "name": "静养与休憩",
+        "images": [
+          "/media/store-01.webp",
+          "/media/store-06.webp",
+          "/media/store-10.webp",
+          "/media/store-03.webp"
+        ]
+      }
+    ],
+    "assetLibrary": [
+      {
+        "id": "store-01",
+        "url": "/media/store-01.webp",
+        "title": "梅花路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-02",
+        "url": "/media/store-02.webp",
+        "title": "上海中心一店",
+        "category": "空间"
+      },
+      {
+        "id": "store-03",
+        "url": "/media/store-03.webp",
+        "title": "上海中心二店",
+        "category": "空间"
+      },
+      {
+        "id": "store-04",
+        "url": "/media/store-04.webp",
+        "title": "吴江路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-05",
+        "url": "/media/store-05.webp",
+        "title": "华山路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-06",
+        "url": "/media/store-06.webp",
+        "title": "四川北路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-07",
+        "url": "/media/store-07.webp",
+        "title": "常德路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-08",
+        "url": "/media/store-08.webp",
+        "title": "百乐门店",
+        "category": "空间"
+      },
+      {
+        "id": "store-09",
+        "url": "/media/store-09.webp",
+        "title": "太古汇店",
+        "category": "空间"
+      },
+      {
+        "id": "store-10",
+        "url": "/media/store-10.webp",
+        "title": "余姚路店",
+        "category": "空间"
+      },
+      {
+        "id": "store-01-alt",
+        "url": "/media/store-01-alt.webp",
+        "title": "梅花路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-02-alt",
+        "url": "/media/store-02-alt.webp",
+        "title": "上海中心一店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-03-alt",
+        "url": "/media/store-03-alt.webp",
+        "title": "上海中心二店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-04-alt",
+        "url": "/media/store-04-alt.webp",
+        "title": "吴江路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-05-alt",
+        "url": "/media/store-05-alt.webp",
+        "title": "华山路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-06-alt",
+        "url": "/media/store-06-alt.webp",
+        "title": "四川北路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-07-alt",
+        "url": "/media/store-07-alt.webp",
+        "title": "常德路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-08-alt",
+        "url": "/media/store-08-alt.webp",
+        "title": "百乐门店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-09-alt",
+        "url": "/media/store-09-alt.webp",
+        "title": "太古汇店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "store-10-alt",
+        "url": "/media/store-10-alt.webp",
+        "title": "余姚路店 · 空间",
+        "category": "空间"
+      },
+      {
+        "id": "space-08-full",
+        "url": "/media/space-08-full.webp",
+        "title": "百乐门店 · 原景",
+        "category": "空间"
+      },
+      {
+        "id": "space-06-full",
+        "url": "/media/space-06-full.webp",
+        "title": "四川北路店 · 原景",
+        "category": "空间"
+      },
+      {
+        "id": "space-07-full",
+        "url": "/media/space-07-full.webp",
+        "title": "常德路店 · 原景",
+        "category": "空间"
+      },
+      {
+        "id": "moxa",
+        "url": "/media/moxa.webp",
+        "title": "艾灸养护",
+        "category": "养护"
+      },
+      {
+        "id": "massage",
+        "url": "/media/massage.webp",
+        "title": "经络舒缓",
+        "category": "养护"
+      },
+      {
+        "id": "foot",
+        "url": "/media/foot.webp",
+        "title": "足部养护",
+        "category": "养护"
+      },
+      {
+        "id": "guasha",
+        "url": "/media/guasha.webp",
+        "title": "东方刮痧",
+        "category": "养护"
+      },
+      {
+        "id": "ritual",
+        "url": "/media/ritual.webp",
+        "title": "手作温度",
+        "category": "养护"
+      },
+      {
+        "id": "tea",
+        "url": "/media/tea.webp",
+        "title": "一盏清茶",
+        "category": "好物"
+      },
+      {
+        "id": "herb-field",
+        "url": "/media/herb-field.webp",
+        "title": "蕲春艾田",
+        "category": "好物"
+      },
+      {
+        "id": "herbal",
+        "url": "/media/herbal.webp",
+        "title": "草本日常",
+        "category": "好物"
+      },
+      {
+        "id": "ceremony",
+        "url": "/media/ceremony.webp",
+        "title": "东方器物",
+        "category": "好物"
+      },
+      {
+        "id": "moxa-product",
+        "url": "/media/moxa-product.webp",
+        "title": "蕲春陈艾",
+        "category": "好物"
+      }
+    ]
+  },
+  "appointments": [
+    {
+      "id": "YHT-DEMO-001",
+      "name": "陈女士",
+      "phone": "13800000000",
+      "storeId": "bai-le-men",
+      "serviceId": "moxa",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "待联系",
+      "createdAt": "2026-10-22T10:00:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    },
+    {
+      "id": "YHT-DEMO-002",
+      "name": "林女士",
+      "phone": "13800000001",
+      "storeId": "sichuan",
+      "serviceId": "massage",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "已确认",
+      "createdAt": "2026-10-22T10:07:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    },
+    {
+      "id": "YHT-DEMO-003",
+      "name": "王先生",
+      "phone": "13800000002",
+      "storeId": "changde",
+      "serviceId": "foot",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "待联系",
+      "createdAt": "2026-10-22T10:14:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    },
+    {
+      "id": "YHT-DEMO-004",
+      "name": "许女士",
+      "phone": "13800000003",
+      "storeId": "shanghai",
+      "serviceId": "moxa",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "已联系",
+      "createdAt": "2026-10-21T10:21:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    },
+    {
+      "id": "YHT-DEMO-005",
+      "name": "沈女士",
+      "phone": "13800000004",
+      "storeId": "meihua",
+      "serviceId": "guasha",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "已完成",
+      "createdAt": "2026-10-20T10:28:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    },
+    {
+      "id": "YHT-DEMO-006",
+      "name": "周先生",
+      "phone": "13800000005",
+      "storeId": "bai-le-men",
+      "serviceId": "massage",
+      "preferredDate": "2026-10-25",
+      "preferredTime": "下午 14:00–17:00",
+      "remark": "演示预约，可在后台记录联系进展。",
+      "status": "已确认",
+      "createdAt": "2026-10-21T10:35:00+08:00",
+      "privacyConsent": true,
+      "demo": true,
+      "history": []
+    }
+  ]
+}
