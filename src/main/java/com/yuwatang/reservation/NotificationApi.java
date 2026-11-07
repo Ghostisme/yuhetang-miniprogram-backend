@@ -17,17 +17,20 @@ class NotificationApi {
     @GetMapping("/api/admin/notifications") @Permit("notifications:read")
     Map<String,Object> logs(HttpServletRequest r,@RequestParam(defaultValue="")String storeId,
             @RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="")String channel,
-            @RequestParam(defaultValue="")String status){
+            @RequestParam(defaultValue="")String status,@RequestParam(defaultValue="")String audience){
         var a=auth.admin(r);String store=admin.scope(a,storeId);
         if(page<1)throw error(400,"消息页码不正确。");
         if(!Set.of("","PC","WECHAT","SMS").contains(channel))throw error(400,"请选择 PC、微信个人消息或短信通知。");
+        if(!Set.of("","CUSTOMER","STAFF").contains(audience))throw error(400,"请选择客户或管理后台通知。");
         if(!Set.of("","AVAILABLE","CANCELLED","PENDING","RETRY","SENDING","ACCEPTED","BLOCKED","FAILED","UNKNOWN").contains(status))throw error(400,"消息状态不正确。");
         String where=" WHERE 1=1";List<Object> args=new ArrayList<>();
         if(!store.isEmpty()){where+=" AND store_id=?";args.add(store);}
+        String customer="(channel='SUBSCRIBE' OR (channel='SMS' AND recipient_id='customer'))";
+        if(!audience.isEmpty())where+=" AND "+(audience.equals("STAFF")?"NOT ":"")+customer;
         if(!channel.isEmpty())where+=switch(channel){case "PC"->" AND channel='INBOX'";case "WECHAT"->" AND channel IN ('SERVICE','SUBSCRIBE')";default->" AND channel='SMS'";};
         if(!status.isEmpty()){where+=" AND delivery_status=?";args.add(status);}
         int total=d.count("SELECT COUNT(*) FROM notification_outbox"+where,args.toArray());args.add(30);args.add((long)(page-1)*30);
-        var rows=d.rows("SELECT id,store_id,appointment_id,channel,recipient_id,event_type,payload_json,delivery_status,attempts,last_error,provider_message_id,created_at FROM notification_outbox"+where+" ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",args.toArray());
+        var rows=d.rows("SELECT id,store_id,appointment_id,channel,recipient_id,event_type,delivery_status,attempts,last_error,provider_message_id,created_at FROM notification_outbox"+where+" ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",args.toArray());
         for(var row:rows){
             String type=str(row,"channel");row.put("channelGroup",NotificationChannels.group(type));
             row.put("audience",type.equals("SUBSCRIBE")||type.equals("SMS")&&str(row,"recipientId").equals("customer")?"预约客户":type.equals("INBOX")?"后台账号":"门店接收人");

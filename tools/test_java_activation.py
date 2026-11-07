@@ -105,7 +105,7 @@ class ActivationTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def run_activation(self, scenario="success", current=OLD_IMAGE):
+    def run_activation(self, scenario="success", current=OLD_IMAGE, args=""):
         containers = {
             NAME: dict(image=current, running=True, health="healthy"),
             "yuwatang-mysql-isolated": dict(image="mysql:fixture", running=True, health="healthy"),
@@ -132,7 +132,7 @@ flock() {{ return 0; }}
 ss() {{ return 0; }}
 curl() {{ printf '%s\\n' '{{"status":"ok","database":"connected","mode":"production"}}'; }}
 export -f docker python3
-yht_main
+yht_main {args}
 """
         env = dict(os.environ, YHT_FIXTURE_ROOT=str(self.root), YHT_FIXTURE_JAR_SHA=JAR_SHA,
                    MSYS_NO_PATHCONV="1", MSYS2_ARG_CONV_EXCL="*")
@@ -160,6 +160,20 @@ yht_main
         process, state = self.run_activation(current=NEW_IMAGE)
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         self.assertIn("Already active", process.stdout)
+        self.assertFalse(any(call[0] in {"stop", "rename", "start", "run", "build"} for call in state["calls"]))
+
+    def test_reload_environment_recreates_same_release_and_preserves_previous_container(self):
+        process, state = self.run_activation(current=NEW_IMAGE, args="--reload-env")
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        self.assertTrue(any(call[0] == "stop" for call in state["calls"]))
+        self.assertTrue(any(call[0] == "run" and "--detach" in call for call in state["calls"]))
+        self.assertEqual(state["containers"][NAME]["image"], NEW_IMAGE)
+        backups = [c for n, c in state["containers"].items() if n.startswith("yuhetang-java-api-before-215000-")]
+        self.assertEqual(backups, [dict(image=NEW_IMAGE, running=False, health="healthy")])
+
+    def test_unknown_arguments_do_not_stop_the_running_application(self):
+        process, state = self.run_activation(args="--unknown")
+        self.assertNotEqual(process.returncode, 0)
         self.assertFalse(any(call[0] in {"stop", "rename", "start", "run", "build"} for call in state["calls"]))
 
     def test_missing_or_modified_release_does_not_stop_old_java(self):

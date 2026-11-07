@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Activate this exact, previously released Java image. No database or gateway changes.
+# Activate this exact Java image; optionally recreate it to load an edited env file.
 set -euo pipefail
 
 YHT_RELEASE=20261107-215000
@@ -19,6 +19,7 @@ YHT_STOPPED=0
 YHT_RENAMED=0
 YHT_COMPLETE=0
 YHT_BACKUP=
+YHT_RELOAD_ENV=0
 
 yht_fail() { printf 'STOP: %s\n' "$*" >&2; exit 1; }
 yht_exists() { docker container inspect "$YHT_NAME" >/dev/null 2>&1; }
@@ -89,7 +90,8 @@ yht_exit() {
 }
 
 yht_main() {
-    [[ $# == 0 ]] || yht_fail 'Run this script without arguments.'
+    if [[ $# == 1 && $1 == --reload-env ]]; then YHT_RELOAD_ENV=1
+    elif [[ $# != 0 ]]; then yht_fail 'Usage: activate.sh [--reload-env]'; fi
     [[ $(id -u) == 0 ]] || yht_fail 'Run: sudo bash /home/ubuntu/yuhetang-activate-215000.sh'
     umask 077
     local tool current uid gid manifest_hash image_hash
@@ -105,7 +107,7 @@ yht_main() {
     yht_exists || yht_fail 'The existing Java container is missing; no other container will be selected automatically.'
     current=$(yht_current_image)
     printf '[1/5] Current image: %s\n' "$current"
-    if [[ $current == "$YHT_IMAGE" ]]; then
+    if [[ $current == "$YHT_IMAGE" && $YHT_RELOAD_ENV == 0 ]]; then
         [[ $(yht_current_hash) == "$YHT_JAR_SHA" ]] || yht_fail 'The running JAR does not match this release.'
         yht_ready || yht_fail 'This release is already running but its health check failed; it was left unchanged.'
         yht_report

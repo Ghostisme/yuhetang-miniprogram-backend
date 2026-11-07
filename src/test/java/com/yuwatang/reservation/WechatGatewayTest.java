@@ -46,6 +46,15 @@ class WechatGatewayTest {
         assertTrue(failure.getMessage().contains("40164"));assertTrue(failure.getMessage().contains("IP 白名单"));
         assertFalse(failure.getMessage().contains("fixture-secret"));assertFalse(failure.getMessage().contains("raw provider"));server.verify();
     }
+    @Test void subscriptionTokenFailureIsKnownToOccurBeforeSubmission(){
+        server.expect(requestTo(tokenUrl)).andRespond(withSuccess("{\"errcode\":40164,\"errmsg\":\"fixture-secret private details\"}",MediaType.TEXT_PLAIN));
+        var failure=assertThrows(WechatGateway.NotificationNotAttemptedException.class,()->gateway.send(false,"fixture-openid","fixture-template",Map.of(),"fixture-booking"));
+        assertTrue(failure.getMessage().contains("尚未提交"));assertFalse(failure.getMessage().contains("fixture-secret"));server.verify();
+    }
+    @Test void customerTemplateInspectionUsesTheMiniProgramAccount(){
+        token();server.expect(requestTo("https://api.weixin.qq.com/wxaapi/newtmpl/gettemplate?access_token=fixture-token")).andRespond(withSuccess("{\"errcode\":0,\"data\":[{\"priTmplId\":\"fixture-template\",\"content\":\"{{thing1.DATA}}\"}]}",MediaType.TEXT_PLAIN));
+        assertEquals("fixture-template",gateway.notificationTemplates(false).get(0).get("priTmplId"));server.verify();
+    }
     @Test void missingCredentialsDoNotAttemptSend(){
         var missing=new WechatGateway("fixture-app","","","","","","","",new ObjectMapper(),RestClient.builder().build());
         var failure=assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->missing.sendCustomerText("fixture-openid","您好"));

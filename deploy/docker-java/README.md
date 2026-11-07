@@ -4,7 +4,17 @@
 
 本次针对已运行的服务器迁移：现有 `yuwatang-mysql-isolated` 容器和 `127.0.0.1:3307/yuwatang_reservation` 继续使用；上传目录 `/var/lib/yuwatang-reservation` 原地挂载；现有网站继续代理 `127.0.0.1:8790`。Docker 使用 Linux host 网络，Java API 和监控端口均绑定回环地址。包里没有数据库首次安装、清理、建库或重置脚本；应用启动时仍会通过 Flyway 执行本项目的必要表结构迁移。
 
-`mp-admin.yuhetangtcm.com` 的网站文件和配置保留；客服回调仍是 `https://booking.hetuonian.cn/api/wechat/customer-service`。本包不配置域名、HTTPS 或公网网关。容器化不能解决未备案域名被云厂商拦截；如果本机 API 返回 200、公网域名被跳转到备案拦截页，需要分别处理域名接入和后端部署。
+当前后台与小程序 API 使用 `https://mp-admin.hetuonian.cn`；客服回调仍是 `https://booking.hetuonian.cn/api/wechat/customer-service`。本包不配置域名、HTTPS 或公网网关。
+
+## 当前 Docker 部署的直接更新入口
+
+已经运行 `yuhetang-java-api` 容器时，使用与本版本配套的 `yuhetang-activate-时分秒.sh`。将 Java `.tar.gz`、它的 `.sha256`、激活脚本及其 `.sha256` 上传至 `/home/ubuntu`，校验后 `sudo bash` 运行激活脚本即可。脚本会核对发行文件、镜像中和运行中 JAR 的 SHA256、独立库目标，并在健康检查失败时恢复原 Java 容器；旧容器另名保留。
+
+本次增加 V7 迁移：通知个人已读表、订阅确认去重表及通知索引。启动时仅迁移现有裕和堂业务库，保留门店、预约和客户记录。更新前先使用现有备份工具保存本项目数据。镜像构建完成不等于运行版本已切换，末尾必须看到新镜像、正确 JAR 校验值和 `Health=healthy`。
+
+后续只调整服务号环境变量时，使用同一版本激活脚本的 `--reload-env` 参数重新创建 Java 容器。普通 `docker restart` 不会重新加载编辑后的 `--env-file`。服务号配置工具 `configure-staff-wechat.py` 会保留原环境文件的私密备份，且仅编辑服务号通知字段。
+
+下面的 systemd 配置导出和首次迁移章节适用于首次安装；已迁移至 Docker 的服务器直接使用上述更新入口。
 
 ## 一、上传与校验
 

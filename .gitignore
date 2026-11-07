@@ -19,6 +19,7 @@ docs/*-result.json
 !docs/capacity-*-result.json
 docs/restart-*.json
 target-api/
+target-notifications/
 backups/
 releases/
 __pycache__/

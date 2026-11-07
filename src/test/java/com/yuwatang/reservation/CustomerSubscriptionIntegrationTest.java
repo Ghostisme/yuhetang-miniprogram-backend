@@ -23,7 +23,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
     "app.jwt-secret=isolated-subscription-tests-secret-more-than-32-characters",
     "app.admin-password=Yht@9800dev","app.pms.enabled=false",
     "app.wechat.app-id=subscription-fixture","app.wechat.secret=fixture-not-a-real-secret",
-    "app.wechat.service-app-id=","app.wechat.service-secret=","app.wechat.service-template=",
+    "app.wechat.service-app-id=staff-fixture","app.wechat.service-secret=fixture-service-secret","app.wechat.service-template=fixture-staff-template",
+    "app.public-url=https://admin-fixture.example",
     "app.wechat.customer-template=fixture-result","app.wechat.customer-reminder-template=fixture-reminder"
 })
 @AutoConfigureMockMvc
@@ -40,8 +41,8 @@ class CustomerSubscriptionIntegrationTest {
 
     @BeforeAll void manualDispatchOnly(){scheduler.destroy();}
     @BeforeEach void reset()throws Exception{
-        for(String table:List.of("notification_outbox","pms_outbox","appointment_history","appointment","slot_override","store_customer","customer_profile","subscription_grant","notification_recipient","notification_channel_config"))d.update("DELETE FROM "+table);
-        d.update("DELETE FROM app_setting WHERE setting_key IN ('customerTemplateMapping','customerReminderTemplateMapping')");
+        for(String table:List.of("subscription_receipt","notification_outbox","pms_outbox","appointment_history","appointment","slot_override","store_customer","customer_profile","subscription_grant","service_binding","notification_recipient","notification_channel_config"))d.update("DELETE FROM "+table);
+        d.update("DELETE FROM app_setting WHERE setting_key IN ('customerTemplateMapping','customerReminderTemplateMapping','serviceTemplateMapping')");
         d.update("UPDATE store SET rules_json=?",d.stringify(Bootstrap.defaultRules()));
         String openid="subscription-test-"+id();customerToken=str(auth.customerSession(openid,false),"token");customerId=str(d.one("SELECT id FROM customer_identity WHERE openid=?",openid),"id");
         hq=auth.token("hq","ADMIN",0);manager=auth.token("yuyao-manager","ADMIN",0);
@@ -63,6 +64,88 @@ class CustomerSubscriptionIntegrationTest {
         return request(patch("/api/admin/appointments/"+created.get("id")),manager,Map.of("action","confirm","version",created.get("version")),200);
     }
     Map<String,Object> resultRow(){return d.one("SELECT * FROM notification_outbox WHERE channel='SUBSCRIBE' AND event_type='appointment.confirm'");}
+
+    @Test void acknowledgementRetriesNeverDuplicateAnAllowance()throws Exception{
+        String requestId=id();var input=Map.of("templateId","fixture-result","accepted",true,"requestId",requestId);
+        request(post("/api/me/subscriptions"),customerToken,input,200);request(post("/api/me/subscriptions"),customerToken,input,200);
+        assertEquals(1,remaining("fixture-result"));assertEquals(1,d.count("SELECT COUNT(*) FROM subscription_receipt"));
+        request(post("/api/me/subscriptions"),customerToken,Map.of("templateId","fixture-reminder","accepted",true,"requestId",requestId),200);
+        assertEquals(1,remaining("fixture-reminder"));
+        request(post("/api/me/subscriptions"),customerToken,Map.of("templateId","fixture-result","accepted",true,"requestId","bad"),400);
+    }
+    @Test void customersSeeOnlyTheirOwnTemplateBalancesAndDeliveryHistory()throws Exception{
+        grant("fixture-result");confirm();notifications.dispatch();
+        var status=request(get("/api/me/subscriptions"),customerToken,null,200);
+        assertEquals(2,((List<?>)status.get("templates")).size());
+        assertEquals(1,((List<?>)status.get("items")).size());
+        assertEquals("ACCEPTED",d.object(((List<?>)status.get("items")).get(0)).get("deliveryStatus"));
+        var other=auth.customerSession("unrelated-customer-"+id(),false);
+        var own=request(get("/api/me/subscriptions"),str(other,"token"),null,200);
+        assertEquals(0,((List<?>)own.get("items")).size());
+        assertTrue(((List<?>)own.get("templates")).stream().allMatch(t->integer(d.object(t),"remaining",-1)==0));
+        request(get("/api/me/subscriptions"),null,null,401);
+    }
+    @Test void tokenFailureBeforeSubmissionRestoresAllowanceWithoutRetrying()throws Exception{
+        grant("fixture-result");confirm();
+        doThrow(new WechatGateway.NotificationNotAttemptedException("通知尚未提交微信：请配置 IP 白名单。")).when(wx).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+        notifications.dispatch();notifications.dispatch();
+        assertEquals("BLOCKED",resultRow().get("deliveryStatus"));assertEquals(1,remaining("fixture-result"));assertFalse(bool(resultRow(),"grantReserved"));
+        assertTrue(str(resultRow(),"lastError").contains("尚未提交"));verify(wx,times(1)).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+    }
+    @Test void unclearProviderResponseStopsRetriesAndPreservesReservedAllowance()throws Exception{
+        grant("fixture-result");confirm();doReturn(Map.of("errmsg","no business result")).when(wx).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+        notifications.dispatch();notifications.dispatch();
+        assertEquals("UNKNOWN",resultRow().get("deliveryStatus"));assertEquals(0,remaining("fixture-result"));
+        verify(wx,times(1)).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+    }
+    @Test void explicitFieldRejectionRestoresAllowanceAndSuccessfulSendStoresProviderId()throws Exception{
+        grant("fixture-result");confirm();doReturn(Map.of("errcode",47003,"errmsg","private provider details")).when(wx).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+        notifications.dispatch();assertEquals("BLOCKED",resultRow().get("deliveryStatus"));assertEquals(1,remaining("fixture-result"));
+        assertTrue(str(resultRow(),"lastError").contains("47003"));assertFalse(str(resultRow(),"lastError").contains("private"));
+        d.update("UPDATE notification_outbox SET delivery_status='PENDING',next_attempt_at=? WHERE channel='SUBSCRIBE'",now());
+        doReturn(Map.of("errcode",0,"msgid","notification-fixture-id")).when(wx).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+        notifications.dispatch();assertEquals("ACCEPTED",resultRow().get("deliveryStatus"));assertEquals("notification-fixture-id",resultRow().get("providerMessageId"));assertEquals(0,remaining("fixture-result"));
+    }
+    @Test void readinessExposesPublicTemplateStateWithoutCredentials()throws Exception{
+        var ready=request(get("/api/admin/notifications/readiness"),hq,null,200);
+        assertFalse(d.stringify(ready).contains("fixture-not-a-real-secret"));
+        var customer=d.object(ready.get("customer"));assertTrue(bool(customer,"credentialsConfigured"));
+        for(Object t:(List<?>)customer.get("templates"))assertTrue(bool(d.object(t),"ready"));
+        d.update("DELETE FROM app_setting WHERE setting_key='customerReminderTemplateMapping'");
+        ready=request(get("/api/admin/notifications/readiness"),manager,null,200);
+        assertFalse(bool(d.object(((List<?>)d.object(ready.get("customer")).get("templates")).get(1)),"ready"));
+        assertFalse(bool(d.object(ready.get("staff")),"ready"));
+    }
+    @Test void staffBindingRequiresOwnerConfirmationAndRoutesOnlyToThatStore()throws Exception{
+        request(post("/api/admin/notifications/binding"),manager,Map.of("storeId","bai-le-men","adminUserId","yuyao-manager"),404);
+        var binding=request(post("/api/admin/notifications/binding"),manager,Map.of("storeId","yuyao","adminUserId","yuyao-manager"),200);
+        assertTrue(str(binding,"url").contains("admin-fixture.example"));
+        String state=str(d.one("SELECT token FROM service_binding WHERE store_id='yuyao' AND used=FALSE"),"token");
+        assertEquals("",str(d.one("SELECT openid FROM notification_recipient WHERE store_id='yuyao'"),"openid"));
+        doReturn("staff-bound-openid").when(wx).oauth("fixture-oauth-code");
+        var callback=mvc.perform(get("/api/wechat/service/callback").param("code","fixture-oauth-code").param("state",state)).andReturn().getResponse();
+        assertEquals(200,callback.getStatus());assertTrue(callback.getContentAsString(StandardCharsets.UTF_8).contains("本人确认绑定"));
+        var confirmed=mvc.perform(post("/api/wechat/service/confirm").param("state",state)).andReturn().getResponse();assertEquals(200,confirmed.getStatus());
+        assertEquals("staff-bound-openid",d.one("SELECT openid FROM notification_recipient WHERE store_id='yuyao'").get("openid"));
+        assertEquals(400,mvc.perform(post("/api/wechat/service/confirm").param("state",state)).andReturn().getResponse().getStatus());
+        var mapping=Map.of("thing1","storeName","time2","time","thing3","eventLabel");
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",mapping),200);
+        confirm();notifications.dispatch();
+        assertEquals(2,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE' AND delivery_status='ACCEPTED'"));
+        verify(wx,times(2)).send(eq(true),eq("staff-bound-openid"),eq("fixture-staff-template"),argThat(data->data.keySet().equals(mapping.keySet())),anyString());
+        request(delete("/api/admin/notifications/binding/yuyao"),manager,null,200);
+        assertFalse(bool(d.one("SELECT enabled FROM notification_recipient WHERE store_id='yuyao'"),"enabled"));
+    }
+    @Test void templateCheckReadsRemoteMetadataWithoutSendingMessages()throws Exception{
+        doReturn(List.of(Map.of("priTmplId","fixture-result","content","姓名{{name1.DATA}} 时间{{date2.DATA}} 项目{{thing3.DATA}} 门店{{thing4.DATA}} 结果{{phrase5.DATA}}"),Map.of("priTmplId","fixture-reminder","content","姓名{{thing31.DATA}} 时间{{time2.DATA}} 项目{{thing7.DATA}} 门店{{thing8.DATA}} 状态{{phrase11.DATA}}"))).when(wx).notificationTemplates(false);
+        var check=request(post("/api/admin/notifications/wechat/check"),hq,Map.of("audience","CUSTOMER"),200);assertTrue(bool(check,"ready"));
+        doReturn(List.of(Map.of("template_id","fixture-staff-template","content","门店{{thing1.DATA}}"))).when(wx).notificationTemplates(true);
+        check=request(post("/api/admin/notifications/wechat/check"),manager,Map.of("audience","STAFF"),200);assertFalse(bool(check,"ready"));
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",Map.of("thing1","storeName")),200);
+        check=request(post("/api/admin/notifications/wechat/check"),manager,Map.of("audience","STAFF"),200);assertTrue(bool(check,"ready"));
+        request(post("/api/admin/notifications/wechat/check"),customerToken,Map.of("audience","STAFF"),401);
+        verify(wx,never()).send(anyBoolean(),anyString(),anyString(),anyMap(),anyString());
+    }
 
     @Test void runtimeAndGrantsKeepTemplateChoicesSeparate()throws Exception{
         var runtime=request(get("/api/runtime"),null,null,200);

@@ -11,6 +11,7 @@ import static com.yuwatang.reservation.Data.*;
 @Component
 class Bootstrap implements CommandLineRunner {
     final Data d; final AuthService auth; final String password,resultMapping,reminderMapping;
+    @Value("${app.wechat.service-template-mapping:}") String serviceMapping="";
     Bootstrap(Data d,AuthService auth,@Value("${app.admin-password}")String password,
               @Value("${app.wechat.customer-template-mapping:}")String resultMapping,
               @Value("${app.wechat.customer-reminder-template-mapping:}")String reminderMapping){
@@ -20,12 +21,13 @@ class Bootstrap implements CommandLineRunner {
     void initializeTemplateMappings(){
         initializeMapping("customerTemplateMapping",resultMapping);
         initializeMapping("customerReminderTemplateMapping",reminderMapping);
+        initializeMapping("serviceTemplateMapping",serviceMapping);
     }
     void initializeMapping(String key,String value){
         if(value.isBlank()||d.count("SELECT COUNT(*) FROM app_setting WHERE setting_key=?",key)>0)return;
         Map<String,Object> mapping=d.object(value);
         if(mapping.isEmpty()||value.length()>2000)throw new IllegalStateException("Invalid WeChat template mapping: "+key);
-        for(var entry:mapping.entrySet())if(!entry.getKey().matches("[a-z_]+[0-9]+")||!Set.of("storeName","serviceName","customerName","time","status","appointmentId","event").contains(Objects.toString(entry.getValue(),"")))throw new IllegalStateException("Invalid WeChat template field: "+key);
+        for(var entry:mapping.entrySet())if(!entry.getKey().matches("(?:[a-z_]+[0-9]+|first|remark)")||!Set.of("storeName","serviceName","customerName","time","status","appointmentId","event","eventLabel").contains(Objects.toString(entry.getValue(),"")))throw new IllegalStateException("Invalid WeChat template field: "+key);
         d.update("INSERT INTO app_setting VALUES(?,?)",key,d.stringify(mapping));
     }
     static final String[][] PERMISSIONS={

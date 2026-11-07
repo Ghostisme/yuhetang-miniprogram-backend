@@ -36,7 +36,7 @@ class NotificationIntegrationTest {
 
     @BeforeAll void manualDispatchOnly(){scheduler.destroy();}
     @BeforeEach void reset(){
-        for(String table:List.of("notification_outbox","pms_outbox","appointment_history","appointment","slot_override","store_customer","customer_profile","subscription_grant","service_binding","notification_recipient","notification_channel_config"))d.update("DELETE FROM "+table);
+        for(String table:List.of("notification_read","notification_outbox","pms_outbox","appointment_history","appointment","slot_override","store_customer","customer_profile","subscription_grant","service_binding","notification_recipient","notification_channel_config"))d.update("DELETE FROM "+table);
         d.update("UPDATE store SET rules_json=?",d.stringify(Bootstrap.defaultRules()));
         var session=auth.customerSession("notification-test-"+id(),true);customerToken=str(session,"token");
         hq=token("hq");manager=token("yuyao-manager");frontdesk=token("yuyao-frontdesk");
@@ -65,6 +65,42 @@ class NotificationIntegrationTest {
         return request(patch("/api/admin/appointments/"+booking.get("id")),manager,Map.of("action","confirm","version",booking.get("version")),200);
     }
     List<Map<String,Object>> smsRows(){return d.rows("SELECT * FROM notification_outbox WHERE channel='SMS' ORDER BY event_type,recipient_id");}
+
+    @Test void inboxReadStateIsPersonalAndIdempotent()throws Exception{
+        confirm(create());var first=request(get("/api/admin/inbox/summary"),manager,null,200);
+        assertEquals(2,first.get("unreadTotal"));var rows=(List<?>)first.get("items");String id=str(d.object(rows.get(0)),"id");
+        assertFalse(bool(d.object(rows.get(0)),"isRead"));assertNotNull(d.object(rows.get(0)).get("eventLabel"));
+        for(int i=0;i<2;i++)request(post("/api/admin/inbox/read"),manager,Map.of("ids",List.of(id)),200);
+        assertEquals(1,request(get("/api/admin/inbox/summary").param("unreadOnly","true"),manager,null,200).get("total"));
+        assertEquals(2,request(get("/api/admin/inbox/summary"),frontdesk,null,200).get("unreadTotal"));
+        assertEquals(2,request(get("/api/admin/inbox/summary"),hq,null,200).get("unreadTotal"));
+        assertEquals(1,d.count("SELECT COUNT(*) FROM notification_read WHERE admin_user_id=?","yuyao-manager"));
+    }
+    @Test void readAllUsesItsSnapshotAndDoesNotConsumeNewMessages()throws Exception{
+        var booking=create();var snapshot=request(get("/api/admin/inbox/summary"),manager,null,200);confirm(booking);
+        request(post("/api/admin/inbox/read-all"),manager,Map.of("asOf",snapshot.get("asOf")),200);
+        var remaining=request(get("/api/admin/inbox/summary").param("unreadOnly","true"),manager,null,200);
+        assertEquals(1,remaining.get("unreadTotal"));assertEquals("appointment.confirm",d.object(((List<?>)remaining.get("items")).get(0)).get("eventType"));
+        request(post("/api/admin/inbox/read-all"),frontdesk,Map.of("asOf",remaining.get("asOf")),200);
+        assertEquals(0,request(get("/api/admin/inbox/summary"),frontdesk,null,200).get("unreadTotal"));
+        request(post("/api/admin/inbox/read-all"),manager,Map.of("asOf","2099-01-01T00:00:00+08:00"),400);
+    }
+    @Test void inboxScopeAndAudienceFiltersPreventCrossStoreAccess()throws Exception{
+        var booking=create();String other=id();
+        d.update("INSERT INTO notification_outbox(id,event_key,store_id,appointment_id,channel,recipient_id,event_type,payload_json,delivery_status,created_at,next_attempt_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",other,id(),"bai-le-men",booking.get("id"),"INBOX","bai-le-men","appointment.created","{}","AVAILABLE",now(),now());
+        assertEquals(1,request(get("/api/admin/inbox/summary"),manager,null,200).get("total"));
+        assertEquals(2,request(get("/api/admin/inbox/summary"),hq,null,200).get("total"));
+        request(get("/api/admin/inbox/summary").param("storeId","bai-le-men"),manager,null,404);
+        request(post("/api/admin/inbox/read"),manager,Map.of("ids",List.of(other)),404);
+        request(post("/api/admin/inbox/read"),customerToken,Map.of("ids",List.of(other)),401);
+        request(get("/api/admin/inbox/summary").param("page","0"),hq,null,400);
+        enableSms();confirm(booking);
+        var customer=request(get("/api/admin/notifications").param("audience","CUSTOMER"),hq,null,200);
+        var staff=request(get("/api/admin/notifications").param("audience","STAFF"),hq,null,200);
+        for(Object row:(List<?>)customer.get("items"))assertEquals("预约客户",d.object(row).get("audience"));
+        for(Object row:(List<?>)staff.get("items"))assertNotEquals("预约客户",d.object(row).get("audience"));
+        request(get("/api/admin/notifications").param("audience","invalid"),hq,null,400);
+    }
 
     @Test void existingStoresKeepPcAndWechatEnabledWithSmsOff()throws Exception{
         var config=settings("yuyao");assertTrue(bool(config,"pcEnabled"));assertTrue(bool(config,"wechatStaffEnabled"));assertTrue(bool(config,"wechatCustomerEnabled"));

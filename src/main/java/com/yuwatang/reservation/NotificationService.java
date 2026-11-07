@@ -56,7 +56,7 @@ public class NotificationService {
         String id=str(item,"id");if(!claim(id))return;item=d.one("SELECT * FROM notification_outbox WHERE id=?",id);int attempts=integer(item,"attempts",0)+1;
         // Claims and reservations commit before network I/O; no pooled connection is held while waiting for providers.
         try{if("SMS".equals(str(item,"channel")))dispatchSms(item,attempts);else dispatchWechat(item,attempts);}
-        catch(Exception e){finish(id,"UNKNOWN",attempts,"Provider result unclear; verify before resending.");}
+        catch(Exception e){finish(id,"UNKNOWN",attempts,"发送结果待核实，已暂停自动重发。请先核实接收方是否收到。");}
     }
     boolean claim(String id){String time=now();return d.update("UPDATE notification_outbox SET delivery_status='SENDING',claimed_at=? WHERE id=? AND delivery_status IN ('PENDING','RETRY') AND next_attempt_at<=?",time,id,time)==1;}
     void dispatchSms(Map<String,Object> item,int attempts){
@@ -113,12 +113,39 @@ public class NotificationService {
             if(bool(d.one("SELECT grant_reserved FROM notification_outbox WHERE id=?",id),"grantReserved"))return true;
             if(d.update("UPDATE subscription_grant SET remaining=remaining-1 WHERE customer_id=? AND template_id=? AND remaining>0",item.get("recipientId"),template)!=1)return false;
             d.update("UPDATE notification_outbox SET grant_reserved=TRUE,payload_json=? WHERE id=?",d.stringify(values),id);return true;
-        });if(!Boolean.TRUE.equals(reserved)){finish(id,"BLOCKED",attempts,"Subscription allowance exhausted.");return;}}
-        var result=wx.send(service,target,template,data,str(item,"appointmentId"));int err=integer(result,"errcode",-1);
-        if(err==0){finish(id,"ACCEPTED",attempts,"微信接口已受理；不代表用户已读。msgid="+str(result,"msgid"));}
-        else if(Set.of(40003,43101,47003,40037,48001,43004).contains(err)){finish(id,"BLOCKED",attempts,"微信拒绝："+err+" "+str(result,"errmsg"));if(!service&&err==43101)d.update("UPDATE subscription_grant SET remaining=0 WHERE customer_id=? AND template_id=?",item.get("recipientId"),template);}
-        else retry(id,attempts,"微信错误码："+err);
+        });if(!Boolean.TRUE.equals(reserved)){finish(id,"BLOCKED",attempts,"客户可用订阅次数不足，请客户在小程序重新授权。");return;}}
+        Map<String,Object> result;
+        try{result=wx.send(service,target,template,data,str(item,"appointmentId"));}
+        catch(WechatGateway.NotificationNotAttemptedException e){if(!service)releaseGrant(item,template);finish(id,"BLOCKED",attempts,e.getMessage());return;}
+        catch(WechatGateway.ExchangeException e){finish(id,"UNKNOWN",attempts,e.getReason()+" 发送结果待核实，已暂停自动重发。");return;}
+        // A malformed/empty business response is not an explicit rejection: retrying could duplicate a delivered message.
+        int err;
+        try{if(!result.containsKey("errcode"))throw new IllegalArgumentException();err=integer(result,"errcode",-99999);}
+        catch(RuntimeException invalid){finish(id,"UNKNOWN",attempts,"微信未返回有效的 errcode，发送结果待核实，已暂停自动重发。");return;}
+        if(err==0){d.update("UPDATE notification_outbox SET provider_message_id=? WHERE id=?",str(result,"msgid"),id);finish(id,"ACCEPTED",attempts,"微信接口已受理；不代表用户已读。");}
+        else if(Set.of(-1,45009,45011,43108).contains(err)){
+            if(!service&&attempts>=3)releaseGrant(item,template);
+            retry(id,attempts,"微信暂未受理（错误码 "+err+"），最多尝试3次。");
+        }else{
+            if(!service){releaseGrant(item,template);if(err==43101)d.update("UPDATE subscription_grant SET remaining=0 WHERE customer_id=? AND template_id=?",item.get("recipientId"),template);}
+            if(Set.of(40001,40014,42001).contains(err))wx.invalidateAccess(service);
+            finish(id,"BLOCKED",attempts,notificationReason(err));
+        }
     }
+    void releaseGrant(Map<String,Object> item,String template){tx.executeWithoutResult(status->{
+        if(d.update("UPDATE notification_outbox SET grant_reserved=FALSE WHERE id=? AND grant_reserved=TRUE",item.get("id"))==1)
+            d.update("UPDATE subscription_grant SET remaining=LEAST(remaining+1,20) WHERE customer_id=? AND template_id=?",item.get("recipientId"),template);
+    });}
+    static String notificationReason(int code){return "微信未受理（错误码 "+code+"）："+switch(code){
+        case 43101 -> "客户未授权此模板或一次性订阅次数已用完，请在小程序重新订阅。";
+        case 47003 -> "模板字段与微信后台不匹配，请核对字段键、类型和字数。";
+        case 40037 -> "模板 ID 无效，请核对当前微信账号下的正式模板。";
+        case 40003 -> "接收人 OpenID 无效或不属于当前微信账号。";
+        case 48001 -> "当前微信账号没有此模板消息接口权限。";
+        case 43004 -> "接收人未关注服务号，请关注后重新绑定。";
+        case 40001,40014,42001 -> "微信凭证失效，已清除本服务缓存；请检查是否有其他系统重复获取凭证。";
+        default -> "请根据错误码核对模板、接收条件与微信平台配置。";
+    };}
     void finish(String id,String state,int attempts,String reason){d.update("UPDATE notification_outbox SET delivery_status=?,attempts=?,last_error=? WHERE id=?",state,attempts,reason,id);}
     void retry(String id,int attempts,String reason){d.update("UPDATE notification_outbox SET delivery_status=?,attempts=?,last_error=?,next_attempt_at=? WHERE id=?",attempts>=3?"FAILED":"RETRY",attempts,reason,OffsetDateTime.now(ZONE).plusMinutes(attempts).toString(),id);}
     @Scheduled(fixedDelay=60000,initialDelay=30000) public void reminders(){

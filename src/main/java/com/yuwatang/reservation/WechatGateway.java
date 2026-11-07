@@ -29,7 +29,7 @@ public class WechatGateway {
     WechatGateway(@Value("${app.wechat.app-id}")String appId,@Value("${app.wechat.secret}")String secret,@Value("${app.wechat.service-app-id}")String serviceId,@Value("${app.wechat.service-secret}")String serviceSecret,@Value("${app.wechat.customer-template}")String customerTemplate,@Value("${app.wechat.customer-reminder-template:}")String customerReminderTemplate,@Value("${app.wechat.service-template}")String serviceTemplate,@Value("${app.public-url}")String publicUrl,ObjectMapper json){this(appId,secret,serviceId,serviceSecret,customerTemplate,customerReminderTemplate,serviceTemplate,publicUrl,json,RestClient.builder().requestFactory(requestFactory()).build());}
     WechatGateway(String appId,String secret,String serviceId,String serviceSecret,String customerTemplate,String customerReminderTemplate,String serviceTemplate,String publicUrl,ObjectMapper json,RestClient http){this.appId=appId;this.secret=secret;this.serviceId=serviceId;this.serviceSecret=serviceSecret;this.customerTemplate=customerTemplate;this.customerReminderTemplate=customerReminderTemplate;this.serviceTemplate=serviceTemplate;this.publicUrl=publicUrl;this.json=json;this.http=http;}
     List<String> customerTemplates(){return java.util.stream.Stream.of(customerTemplate,customerReminderTemplate).filter(t->!t.isBlank()).distinct().toList();}
-    String customerTemplate(String event){return event.equals("appointment.reminder")&&!customerReminderTemplate.isBlank()?customerReminderTemplate:customerTemplate;}
+    String customerTemplate(String event){return event.equals("appointment.reminder")?customerReminderTemplate:customerTemplate;}
     String customerMapping(String event){return event.equals("appointment.reminder")&&!customerReminderTemplate.isBlank()&&!customerReminderTemplate.equals(customerTemplate)?"customerReminderTemplateMapping":"customerTemplateMapping";}
     static class ExchangeException extends ResponseStatusException {
         final String category;
@@ -67,6 +67,16 @@ public class WechatGateway {
     String login(String code){if(appId.isBlank()||secret.isBlank())throw error(503,"小程序登录尚未配置，请联系管理员完成微信账号接入。");var r=get("https://api.weixin.qq.com/sns/jscode2session?appid="+enc(appId)+"&secret="+enc(secret)+"&js_code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(401,"微信登录未完成，请重新进入小程序。");return str(r,"openid");}
     String oauth(String code){if(serviceId.isBlank()||serviceSecret.isBlank())throw error(503,"服务号尚未配置。");var r=get("https://api.weixin.qq.com/sns/oauth2/access_token?appid="+enc(serviceId)+"&secret="+enc(serviceSecret)+"&code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(400,"微信授权未完成，请重新生成绑定链接。");String openid=str(r,"openid");var follow=get("https://api.weixin.qq.com/cgi-bin/user/info?access_token="+enc(access(true))+"&openid="+enc(openid)+"&lang=zh_CN");if(integer(follow,"subscribe",0)!=1)throw error(400,"请先关注品牌服务号，再重新绑定。");return openid;}
     synchronized String access(boolean service){String k=service?"service":"mini";var c=cache.get(k);if(c!=null&&Instant.now().isBefore(c.expiry))return c.value;String id=service?serviceId:appId,sec=service?serviceSecret:secret;if(id.isBlank()||sec.isBlank())throw error(503,"微信应用密钥未配置，请检查服务器的 AppID 和 AppSecret。");var r=get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+enc(id)+"&secret="+enc(sec));String value=str(r,"access_token");if(value.isBlank())throw error(502,"微信 access_token 获取失败。"+failureReason(integer(r,"errcode",-1)));cache.put(k,new Access(value,Instant.now().plusSeconds(Math.max(60,integer(r,"expires_in",7200)-300))));return value;}
+    synchronized void invalidateAccess(boolean service){cache.remove(service?"service":"mini");}
+    List<Map<String,Object>> notificationTemplates(boolean service){
+        String path=service?"cgi-bin/template/get_all_private_template":"wxaapi/newtmpl/gettemplate";
+        var result=get("https://api.weixin.qq.com/"+path+"?access_token="+enc(access(service)));
+        int code=integer(result,"errcode",0);
+        if(code!=0){if(Set.of(40001,40014,42001).contains(code))invalidateAccess(service);throw error(502,"微信模板检查失败（错误码 "+code+"），请检查账号权限和凭证配置。");}
+        Object rows=result.get(service?"template_list":"data");
+        if(!(rows instanceof List<?> list))throw error(502,"微信没有返回可用的模板列表，请检查账号权限。");
+        return list.stream().filter(Map.class::isInstance).map(value->json.convertValue(value,new TypeReference<Map<String,Object>>(){})).toList();
+    }
     static String failureReason(int code){return "微信错误码 "+code+"："+switch(code){
         case 40013 -> "AppID 无效，请核对小程序 AppID。";
         case 40125 -> "AppSecret 无效，请核对服务器密钥配置。";
@@ -82,7 +92,17 @@ public class WechatGateway {
     static class CustomerSendNotAttemptedException extends RuntimeException {
         CustomerSendNotAttemptedException(String reason){super(reason);}
     }
-    Map<String,Object> send(boolean service,String recipient,String template,Map<String,Object> data,String appointment){Map<String,Object> body=new LinkedHashMap<>();body.put("touser",recipient);body.put("template_id",template);body.put("data",data);if(service){if(publicUrl.startsWith("https://"))body.put("url",publicUrl.replaceAll("/+$","")+"/admin");}else body.put("page","pages/orders/index?id="+appointment);return post("https://api.weixin.qq.com/cgi-bin/"+(service?"message/template/send":"message/subscribe/send")+"?access_token="+enc(access(service)),body);}
+    static class NotificationNotAttemptedException extends RuntimeException {
+        NotificationNotAttemptedException(String reason){super(reason);}
+    }
+    Map<String,Object> send(boolean service,String recipient,String template,Map<String,Object> data,String appointment){
+        String token;
+        try{token=access(service);}catch(ResponseStatusException e){throw new NotificationNotAttemptedException("通知尚未提交微信："+e.getReason());}
+        Map<String,Object> body=new LinkedHashMap<>();body.put("touser",recipient);body.put("template_id",template);body.put("data",data);
+        if(service){if(publicUrl.startsWith("https://"))body.put("url",publicUrl.replaceAll("/+$","")+"/admin");}
+        else body.put("page","pages/orders/index?id="+appointment);
+        return post("https://api.weixin.qq.com/cgi-bin/"+(service?"message/template/send":"message/subscribe/send")+"?access_token="+enc(token),body);
+    }
     Map<String,Object> sendCustomerText(String openid,String content){
         String token;
         try{token=access(false);}catch(ResponseStatusException e){throw new CustomerSendNotAttemptedException("消息尚未提交微信："+e.getReason());}
