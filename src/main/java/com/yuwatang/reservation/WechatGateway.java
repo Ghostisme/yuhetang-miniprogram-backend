@@ -19,7 +19,7 @@ public class WechatGateway {
     final String appId,secret,serviceId,serviceSecret,customerTemplate,customerReminderTemplate,serviceTemplate,publicUrl;
     final RestClient http;
     final ObjectMapper json;
-    private static org.springframework.http.client.JdkClientHttpRequestFactory requestFactory(){
+    static org.springframework.http.client.JdkClientHttpRequestFactory requestFactory(){
         var factory=new org.springframework.http.client.JdkClientHttpRequestFactory(java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(8)).build());
         factory.setReadTimeout(java.time.Duration.ofSeconds(12));
         return factory;
@@ -56,7 +56,14 @@ public class WechatGateway {
         catch(java.io.IOException|IllegalArgumentException e){throw new ExchangeException("INVALID_RESPONSE","微信接口返回的内容无法解析。");}
     }
     Map<String,Object> get(String url){try{return response(http.get().uri(url).retrieve().body(byte[].class));}catch(RestClientException e){throw transportFailure(e);}}
-    Map<String,Object> post(String url,Map<String,Object> body){try{return response(http.post().uri(url).contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(byte[].class));}catch(RestClientException e){throw transportFailure(e);}}
+    Map<String,Object> post(String url,Map<String,Object> body){
+        // WeChat rejects chunked POST bodies with HTTP 412. Serialize once so the
+        // JDK request publisher knows the exact UTF-8 byte length before sending.
+        byte[] payload;
+        try{payload=json.writeValueAsBytes(body);}catch(com.fasterxml.jackson.core.JsonProcessingException e){throw new ExchangeException("INVALID_REQUEST","微信请求内容无法生成 JSON。");}
+        try{return response(http.post().uri(url).contentType(MediaType.APPLICATION_JSON).contentLength(payload.length).body(payload).retrieve().body(byte[].class));}
+        catch(RestClientException e){throw transportFailure(e);}
+    }
     String login(String code){if(appId.isBlank()||secret.isBlank())throw error(503,"小程序登录尚未配置，请联系管理员完成微信账号接入。");var r=get("https://api.weixin.qq.com/sns/jscode2session?appid="+enc(appId)+"&secret="+enc(secret)+"&js_code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(401,"微信登录未完成，请重新进入小程序。");return str(r,"openid");}
     String oauth(String code){if(serviceId.isBlank()||serviceSecret.isBlank())throw error(503,"服务号尚未配置。");var r=get("https://api.weixin.qq.com/sns/oauth2/access_token?appid="+enc(serviceId)+"&secret="+enc(serviceSecret)+"&code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(400,"微信授权未完成，请重新生成绑定链接。");String openid=str(r,"openid");var follow=get("https://api.weixin.qq.com/cgi-bin/user/info?access_token="+enc(access(true))+"&openid="+enc(openid)+"&lang=zh_CN");if(integer(follow,"subscribe",0)!=1)throw error(400,"请先关注品牌服务号，再重新绑定。");return openid;}
     synchronized String access(boolean service){String k=service?"service":"mini";var c=cache.get(k);if(c!=null&&Instant.now().isBefore(c.expiry))return c.value;String id=service?serviceId:appId,sec=service?serviceSecret:secret;if(id.isBlank()||sec.isBlank())throw error(503,"微信应用密钥未配置，请检查服务器的 AppID 和 AppSecret。");var r=get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+enc(id)+"&secret="+enc(sec));String value=str(r,"access_token");if(value.isBlank())throw error(502,"微信 access_token 获取失败。"+failureReason(integer(r,"errcode",-1)));cache.put(k,new Access(value,Instant.now().plusSeconds(Math.max(60,integer(r,"expires_in",7200)-300))));return value;}

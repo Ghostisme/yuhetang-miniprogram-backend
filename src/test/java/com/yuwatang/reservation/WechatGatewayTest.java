@@ -97,4 +97,33 @@ class WechatGatewayTest {
         server.expect(requestTo(tokenUrl)).andRespond(withSuccess("{\"access_token\":\"\"}",MediaType.APPLICATION_JSON));
         assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->gateway.sendCustomerText("fixture-openid","您好"));server.verify();
     }
+    @Test void sendsUtf8JsonWithFixedLengthToEndpointsThatRejectChunkedRequests()throws Exception{
+        var headers=new java.util.concurrent.atomic.AtomicReference<com.sun.net.httpserver.Headers>();
+        var received=new java.util.concurrent.atomic.AtomicReference<byte[]>();
+        var local=com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1",0),0);
+        local.createContext("/custom",exchange->{
+            try{
+                headers.set(exchange.getRequestHeaders());received.set(exchange.getRequestBody().readAllBytes());
+                if(exchange.getRequestHeaders().containsKey("Transfer-Encoding"))exchange.sendResponseHeaders(412,-1);
+                else{
+                    byte[] response="{\"errcode\":0,\"errmsg\":\"ok\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type","application/json");
+                    exchange.sendResponseHeaders(200,response.length);exchange.getResponseBody().write(response);
+                }
+            }finally{exchange.close();}
+        });
+        local.start();
+        try{
+            var mapper=new ObjectMapper();
+            var wire=new WechatGateway("fixture-app","fixture-secret","","","","","","",mapper,
+                RestClient.builder().requestFactory(WechatGateway.requestFactory()).build());
+            var payload=Map.<String,Object>of("touser","fixture-openid","msgtype","text","text",Map.of("content","您好，裕和堂已收到咨询🌿\n回复：\"已确认\""));
+            var result=wire.post("http://127.0.0.1:"+local.getAddress().getPort()+"/custom",payload);
+            assertEquals(0,result.get("errcode"));
+            assertNull(headers.get().getFirst("Transfer-Encoding"));
+            assertEquals(received.get().length,Integer.parseInt(headers.get().getFirst("Content-Length")));
+            assertEquals(mapper.valueToTree(payload),mapper.readTree(received.get()));
+            assertEquals("application/json",headers.get().getFirst("Content-Type"));
+        }finally{local.stop(0);}
+    }
 }
