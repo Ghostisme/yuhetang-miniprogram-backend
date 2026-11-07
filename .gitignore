@@ -7,6 +7,7 @@ logs/
 .env
 .env.*
 !.env.example
+!deploy/.env.tencent.example
 *.log
 *.mv.db
 *.trace.db
@@ -15,4 +16,14 @@ logs/
 *.iml
 docs/screenshots/
 docs/*-result.json
+!docs/capacity-*-result.json
 docs/restart-*.json
+target-api/
+backups/
+releases/
+__pycache__/
+*.pyc
+*.key
+*.pem
+*.pfx
+*.p12

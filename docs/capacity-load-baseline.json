@@ -1,0 +1,386 @@
+{
+  "measuredAt": "2026-11-05T05:55:13.947Z",
+  "scope": "Local synthetic HTTP baseline; not a 50,000 simultaneous-user or cloud certification",
+  "fixtureCustomers": 50000,
+  "fixtureAppointments": 100000,
+  "bases": [
+    "http://127.0.0.1:18892"
+  ],
+  "logicalCpus": 32,
+  "hostMemoryGiB": 64,
+  "loadGeneratorSharesHost": true,
+  "limits": {
+    "clientMaxInFlight": 256,
+    "apiAdmittedRequests": 96,
+    "apiDatabasePool": 24
+  },
+  "mix": {
+    "site": 35,
+    "slots": 30,
+    "mine": 20,
+    "appointments": 10,
+    "dashboard": 5
+  },
+  "results": [
+    {
+      "targetRps": 100,
+      "seconds": 30,
+      "planned": 3000,
+      "launched": 3000,
+      "completed": 3000,
+      "dropped": 0,
+      "peakInFlight": 36,
+      "statuses": {
+        "200": 3000
+      },
+      "routes": {
+        "site": {
+          "count": 1050,
+          "statuses": {
+            "200": 1050
+          },
+          "latencyMs": {
+            "p50": 1.75,
+            "p95": 4.11,
+            "p99": 270.23,
+            "max": 367.39
+          }
+        },
+        "slots": {
+          "count": 900,
+          "statuses": {
+            "200": 900
+          },
+          "latencyMs": {
+            "p50": 3.31,
+            "p95": 5.54,
+            "p99": 17.35,
+            "max": 109.29
+          }
+        },
+        "mine": {
+          "count": 600,
+          "statuses": {
+            "200": 600
+          },
+          "latencyMs": {
+            "p50": 3.18,
+            "p95": 4.94,
+            "p99": 6.1,
+            "max": 13.05
+          }
+        },
+        "appointments": {
+          "count": 300,
+          "statuses": {
+            "200": 300
+          },
+          "latencyMs": {
+            "p50": 16.42,
+            "p95": 20.51,
+            "p99": 25.77,
+            "max": 28.09
+          }
+        },
+        "dashboard": {
+          "count": 150,
+          "statuses": {
+            "200": 150
+          },
+          "latencyMs": {
+            "p50": 104.78,
+            "p95": 130.82,
+            "p99": 141.29,
+            "max": 146.98
+          }
+        }
+      },
+      "errors": [],
+      "decodedBytes": 37794578,
+      "elapsedSeconds": 30.13,
+      "completedRps": 99.57,
+      "latencyMs": {
+        "p50": 3.06,
+        "p95": 96.75,
+        "p99": 130.82,
+        "max": 367.39
+      },
+      "schedulingLagMs": {
+        "p50": 17.36,
+        "p95": 24.82,
+        "p99": 25.84,
+        "max": 37.6
+      }
+    },
+    {
+      "targetRps": 250,
+      "seconds": 30,
+      "planned": 7500,
+      "launched": 7500,
+      "completed": 7500,
+      "dropped": 0,
+      "peakInFlight": 10,
+      "statuses": {
+        "200": 7500
+      },
+      "routes": {
+        "site": {
+          "count": 2625,
+          "statuses": {
+            "200": 2625
+          },
+          "latencyMs": {
+            "p50": 1.61,
+            "p95": 2.9,
+            "p99": 3.81,
+            "max": 5.66
+          }
+        },
+        "slots": {
+          "count": 2250,
+          "statuses": {
+            "200": 2250
+          },
+          "latencyMs": {
+            "p50": 2.86,
+            "p95": 3.97,
+            "p99": 5.5,
+            "max": 8.26
+          }
+        },
+        "mine": {
+          "count": 1500,
+          "statuses": {
+            "200": 1500
+          },
+          "latencyMs": {
+            "p50": 2.69,
+            "p95": 3.83,
+            "p99": 5.77,
+            "max": 22.25
+          }
+        },
+        "appointments": {
+          "count": 750,
+          "statuses": {
+            "200": 750
+          },
+          "latencyMs": {
+            "p50": 16.05,
+            "p95": 21.25,
+            "p99": 24.24,
+            "max": 41.78
+          }
+        },
+        "dashboard": {
+          "count": 375,
+          "statuses": {
+            "200": 375
+          },
+          "latencyMs": {
+            "p50": 104.36,
+            "p95": 135.29,
+            "p99": 160.87,
+            "max": 166.87
+          }
+        }
+      },
+      "errors": [],
+      "decodedBytes": 94487360,
+      "elapsedSeconds": 30.1,
+      "completedRps": 249.17,
+      "latencyMs": {
+        "p50": 2.65,
+        "p95": 41.78,
+        "p99": 113.32,
+        "max": 166.87
+      },
+      "schedulingLagMs": {
+        "p50": 11.2,
+        "p95": 18.82,
+        "p99": 19.82,
+        "max": 24.32
+      }
+    },
+    {
+      "targetRps": 500,
+      "seconds": 30,
+      "planned": 15000,
+      "launched": 15000,
+      "completed": 15000,
+      "dropped": 0,
+      "peakInFlight": 27,
+      "statuses": {
+        "200": 15000
+      },
+      "routes": {
+        "site": {
+          "count": 5250,
+          "statuses": {
+            "200": 5250
+          },
+          "latencyMs": {
+            "p50": 1.76,
+            "p95": 3.95,
+            "p99": 6.29,
+            "max": 13.53
+          }
+        },
+        "slots": {
+          "count": 4500,
+          "statuses": {
+            "200": 4500
+          },
+          "latencyMs": {
+            "p50": 3.09,
+            "p95": 5.69,
+            "p99": 7.16,
+            "max": 11
+          }
+        },
+        "mine": {
+          "count": 3000,
+          "statuses": {
+            "200": 3000
+          },
+          "latencyMs": {
+            "p50": 3.6,
+            "p95": 6.87,
+            "p99": 8.02,
+            "max": 14
+          }
+        },
+        "appointments": {
+          "count": 1500,
+          "statuses": {
+            "200": 1500
+          },
+          "latencyMs": {
+            "p50": 25.17,
+            "p95": 44.94,
+            "p99": 55.24,
+            "max": 67.79
+          }
+        },
+        "dashboard": {
+          "count": 750,
+          "statuses": {
+            "200": 750
+          },
+          "latencyMs": {
+            "p50": 100.86,
+            "p95": 114.81,
+            "p99": 122.09,
+            "max": 132.98
+          }
+        }
+      },
+      "errors": [],
+      "decodedBytes": 188984828,
+      "elapsedSeconds": 30.12,
+      "completedRps": 498.01,
+      "latencyMs": {
+        "p50": 2.99,
+        "p95": 67.79,
+        "p99": 107.21,
+        "max": 132.98
+      },
+      "schedulingLagMs": {
+        "p50": 7.88,
+        "p95": 16.6,
+        "p99": 18.02,
+        "max": 22.41
+      }
+    },
+    {
+      "targetRps": 1000,
+      "seconds": 30,
+      "planned": 30000,
+      "launched": 30000,
+      "completed": 30000,
+      "dropped": 0,
+      "peakInFlight": 41,
+      "statuses": {
+        "200": 30000
+      },
+      "routes": {
+        "site": {
+          "count": 10500,
+          "statuses": {
+            "200": 10500
+          },
+          "latencyMs": {
+            "p50": 2.74,
+            "p95": 5.96,
+            "p99": 8.79,
+            "max": 18.49
+          }
+        },
+        "slots": {
+          "count": 9000,
+          "statuses": {
+            "200": 9000
+          },
+          "latencyMs": {
+            "p50": 5.14,
+            "p95": 9.7,
+            "p99": 13.67,
+            "max": 20.41
+          }
+        },
+        "mine": {
+          "count": 6000,
+          "statuses": {
+            "200": 6000
+          },
+          "latencyMs": {
+            "p50": 4.56,
+            "p95": 9.94,
+            "p99": 13.5,
+            "max": 24.8
+          }
+        },
+        "appointments": {
+          "count": 3000,
+          "statuses": {
+            "200": 3000
+          },
+          "latencyMs": {
+            "p50": 33.03,
+            "p95": 44.93,
+            "p99": 52.55,
+            "max": 62.79
+          }
+        },
+        "dashboard": {
+          "count": 1500,
+          "statuses": {
+            "200": 1500
+          },
+          "latencyMs": {
+            "p50": 147.32,
+            "p95": 167.08,
+            "p99": 177.27,
+            "max": 198.4
+          }
+        }
+      },
+      "errors": [],
+      "decodedBytes": 377968527,
+      "elapsedSeconds": 30.13,
+      "completedRps": 995.69,
+      "latencyMs": {
+        "p50": 4.43,
+        "p95": 62.79,
+        "p99": 156.99,
+        "max": 198.4
+      },
+      "schedulingLagMs": {
+        "p50": 5.28,
+        "p95": 14.53,
+        "p99": 17.21,
+        "max": 21.64
+      }
+    }
+  ]
+}

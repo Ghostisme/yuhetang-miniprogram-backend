@@ -1,0 +1,15 @@
+# Enable a second API process. A second process on the same host does not provide host redundancy.
+services:
+  api2:
+    extends:
+      file: compose.yml
+      service: api
+    build: !reset null
+  nginx:
+    volumes:
+      - ./nginx.scale.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      api2:
+        condition: service_healthy

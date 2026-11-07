@@ -1,0 +1,35 @@
+[Unit]
+Description=Yuhetang reservation API and admin
+After=network-online.target mysqld.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=yuwatang
+Group=yuwatang
+WorkingDirectory=/srv/yuwatang-reservation
+EnvironmentFile=/etc/yuwatang-reservation.env
+Environment=TZ=Asia/Shanghai
+ExecStart=/opt/yuhetang-java17/bin/java -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -Xms128m -Xmx512m -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -jar /srv/yuwatang-reservation/reservation.jar
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=50
+SuccessExitStatus=143
+StateDirectory=yuwatang-reservation
+StateDirectoryMode=0750
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/yuwatang-reservation
+MemoryHigh=850M
+MemoryMax=1G
+TasksMax=180
+LimitNOFILE=8192
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=yuwatang-reservation
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,25 @@
+{
+  "measuredAt": "2026-11-05T05:56:45.301Z",
+  "scope": "Isolated MySQL HTTP correctness",
+  "checks": [
+    {
+      "name": "80 requests share four seats across API instances",
+      "success": 4,
+      "rejectedAsFull": 76,
+      "instances": 2
+    },
+    {
+      "name": "48 repeated submissions create one appointment across instances",
+      "appointmentCount": 1
+    },
+    {
+      "name": "32 changes of the same version accept exactly one",
+      "accepted": 1,
+      "conflicts": 31
+    },
+    {
+      "name": "All synthetic active test bookings cancelled; instances remain healthy",
+      "cancelled": 5
+    }
+  ]
+}

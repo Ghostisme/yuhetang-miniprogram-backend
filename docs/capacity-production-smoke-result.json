@@ -1,0 +1,14 @@
+{
+  "productionProfileStarts": true,
+  "productionHealth": {
+    "database": "connected",
+    "backend": "Java 17 / Spring Boot",
+    "mode": "production",
+    "status": "ok"
+  },
+  "developmentLoginDisabled": true,
+  "managementOnSeparatePort": true,
+  "prometheusOnPrivateManagementPort": true,
+  "developmentCustomerEndpointStatus": 404,
+  "isolatedMysql": true
+}

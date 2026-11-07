@@ -1,0 +1,15 @@
+{
+  "appId": "wxce054e18303efb8a",
+  "result": {
+    "title": "预约处理提醒",
+    "templateId": "JVNwa7kEPHJUORhAJKvqdnYbazd7uNmkJPJ4ImucDlQ",
+    "scenario": "通知客户预约确认改期或取消结果",
+    "mapping": {"name1": "customerName", "date2": "time", "thing3": "serviceName", "thing4": "storeName", "phrase5": "status"}
+  },
+  "reminder": {
+    "title": "预约提醒",
+    "templateId": "VaYcGAZpoIhzLoojppTX8LVbcS1Ftq33WBPTYwsfkFY",
+    "scenario": "到店前提醒客户预约时间项目门店",
+    "mapping": {"thing31": "customerName", "time2": "time", "thing7": "serviceName", "thing8": "storeName", "phrase11": "status"}
+  }
+}

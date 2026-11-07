@@ -1,0 +1,11 @@
+{
+  "stage": "after",
+  "businessUnchanged": true,
+  "appointments": 12,
+  "stores": 9,
+  "therapists": 27,
+  "users": 4,
+  "roles": 3,
+  "dianpingOrders": 0,
+  "dianpingCustomerLinks": 0
+}

@@ -1,0 +1,87 @@
+name: yuwatang
+x-app: &app
+  image: yuwatang-reservation:local
+  build:
+    context: ../..
+    dockerfile: yuhetang-miniprogram-backend/Dockerfile
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 40s
+  mem_limit: 1600m
+  environment: &app-env
+    SPRING_PROFILES_ACTIVE: production
+    PORT: 8790
+    APP_DATA_DIR: /app/data
+    PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL}
+    DB_URL: jdbc:mysql://mysql:3306/yuwatang_reservation?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    DB_USERNAME: yuwatang_app
+    DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+    JWT_SECRET: ${JWT_SECRET:?Set the same JWT_SECRET for all instances}
+    ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+    DB_POOL_SIZE: 24
+    DB_POOL_IDLE: 4
+    MAX_ACTIVE_REQUESTS: 96
+    MAX_ACTIVE_WRITES: 16
+    WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+    WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+    WECHAT_MESSAGE_TOKEN: ${WECHAT_MESSAGE_TOKEN:-}
+    WECHAT_MESSAGE_AES_KEY: ${WECHAT_MESSAGE_AES_KEY:-}
+    SERVICE_APP_ID: ${SERVICE_APP_ID:-}
+    SERVICE_APP_SECRET: ${SERVICE_APP_SECRET:-}
+    SERVICE_TEMPLATE_ID: ${SERVICE_TEMPLATE_ID:-}
+    CUSTOMER_TEMPLATE_ID: ${CUSTOMER_TEMPLATE_ID:-}
+    CUSTOMER_REMINDER_TEMPLATE_ID: ${CUSTOMER_REMINDER_TEMPLATE_ID:-}
+    CUSTOMER_TEMPLATE_MAPPING: ${CUSTOMER_TEMPLATE_MAPPING:-}
+    CUSTOMER_REMINDER_TEMPLATE_MAPPING: ${CUSTOMER_REMINDER_TEMPLATE_MAPPING:-}
+    SMS_SECRET_ID: ${SMS_SECRET_ID:-}
+    SMS_SECRET_KEY: ${SMS_SECRET_KEY:-}
+    SMS_APP_ID: ${SMS_APP_ID:-}
+    SMS_SIGN_NAME: ${SMS_SIGN_NAME:-}
+    SMS_STAFF_TEMPLATE_ID: ${SMS_STAFF_TEMPLATE_ID:-}
+    SMS_CUSTOMER_TEMPLATE_ID: ${SMS_CUSTOMER_TEMPLATE_ID:-}
+    SERVICE_OAUTH_URL: ${SERVICE_OAUTH_URL:-}
+  volumes:
+    - uploads:/app/data
+  depends_on:
+    mysql:
+      condition: service_healthy
+  networks: [private]
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    mem_limit: 3g
+    environment:
+      MYSQL_DATABASE: yuwatang_reservation
+      MYSQL_USER: yuwatang_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    command: ["--character-set-server=utf8mb4","--collation-server=utf8mb4_0900_ai_ci","--max-connections=120","--innodb-buffer-pool-size=1536M","--innodb-flush-log-at-trx-commit=1","--innodb-lock-wait-timeout=5","--slow-query-log=ON","--long-query-time=1"]
+    volumes: ["mysql-data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h 127.0.0.1 -u root --silent"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    networks: [private]
+  api:
+    <<: *app
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    ports: ["127.0.0.1:8080:8080"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./trusted-proxies.conf:/etc/nginx/trusted-proxies.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [private]
+volumes:
+  mysql-data:
+  uploads:
+networks:
+  private:
