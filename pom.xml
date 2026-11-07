@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion><parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>3.5.16</version><relativePath/></parent>
-  <groupId>com.yuwatang</groupId><artifactId>reservation</artifactId><version>1.0.0</version><properties><java.version>17</java.version><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><frontend.dist>${project.basedir}/../yuhetang-miniprogram-admin/dist</frontend.dist><frontend.media>${project.basedir}/../yuhetang-miniprogram-admin/public/media</frontend.media></properties>
+  <groupId>com.yuwatang</groupId><artifactId>reservation</artifactId><version>1.0.0</version><properties><java.version>17</java.version><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
     <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-registry-prometheus</artifactId></dependency>
@@ -22,8 +22,7 @@
   </dependencies>
   <build><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><argLine>-Dfile.encoding=UTF-8 -Djdk.net.unixdomain.tmpdir=./.socket-tcp-fallback</argLine></configuration></plugin></plugins></build>
   <profiles>
-    <profile><id>release</id><build><resources><resource><directory>src/main/resources</directory></resource><resource><directory>${frontend.dist}</directory><targetPath>static</targetPath></resource><resource><directory>${frontend.media}</directory><targetPath>static/media</targetPath></resource></resources></build></profile>
-    <!-- Keep the cloud artifact separate from the JAR used by start-local.ps1. -->
+    <!-- Legacy artifact-name alias; all profiles build the standalone Java API only. -->
     <profile><id>cloud-release</id><build><finalName>reservation-cloud-${project.version}</finalName></build></profile>
     <!-- Independent API build: never reuse target/classes/static from a combined release. -->
     <profile>
@@ -33,7 +32,6 @@
         <finalName>reservation-api-${project.version}</finalName>
         <resources>
           <resource><directory>src/main/resources</directory></resource>
-          <resource><directory>${frontend.media}</directory><targetPath>static/media</targetPath></resource>
         </resources>
       </build>
     </profile>

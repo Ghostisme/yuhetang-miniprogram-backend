@@ -1,7 +1,7 @@
 param([ValidateRange(1024,65535)][int]$Port = 8790)
 $ErrorActionPreference = 'Stop'
 $backendRoot = Split-Path -Parent $PSScriptRoot
-$expectedJar = Join-Path $backendRoot 'target\reservation-1.0.0.jar'
+$expectedJar = Join-Path $backendRoot 'target-api\reservation-api-1.0.0.jar'
 $statePath = Join-Path $backendRoot "data\local-server-$Port.json"
 if (!(Test-Path -LiteralPath $statePath)) { Write-Output 'No tracked local server.'; exit 0 }
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json

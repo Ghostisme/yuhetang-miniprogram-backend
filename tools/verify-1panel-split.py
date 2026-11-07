@@ -4,6 +4,7 @@ Uses a disposable in-memory LOCAL database and random test credentials; never
 opens the existing local database or sends WeChat/SMS. This is not a 1Panel,
 Linux, production-MySQL or public-TLS runtime test.
 """
+import argparse
 import datetime as dt
 import hashlib
 import json
@@ -20,7 +21,6 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-ADMIN_ROOT = ROOT.parent / "yuhetang-miniprogram-admin"
 OUTPUT = ROOT / "backups/1panel-split-verification"
 NGINX_URL = "https://nginx.org/download/nginx-1.28.0.zip"
 CHECKS = []
@@ -47,6 +47,12 @@ def request(url, *, data=None, token=None):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--frontend-dist", type=Path, required=True,
+                        help="Explicit path to an already built frontend; no sibling repository is required")
+    args = parser.parse_args()
+    frontend_dist = args.frontend_dist.resolve()
+    assert (frontend_dist / "index.html").is_file() and (frontend_dist / "assets").is_dir(), frontend_dist
     assert os.name == "nt", "This verification fixture uses the official Windows Nginx build"
     OUTPUT.mkdir(parents=True, exist_ok=True)
     nginx_zip = OUTPUT / "nginx-1.28.0.zip"
@@ -71,7 +77,7 @@ def main():
         (fixture / "logs").mkdir()
         (fixture / "conf").mkdir()
         (fixture / "temp").mkdir()
-        shutil.copytree(ADMIN_ROOT / "dist", fixture / "html")
+        shutil.copytree(frontend_dist, fixture / "html")
         shutil.copyfile(OUTPUT / "runtime/nginx-1.28.0/conf/mime.types", fixture / "conf/mime.types")
         env.update(APP_MODE="local", PORT=str(api_port), BIND_ADDRESS="127.0.0.1",
                    DB_URL="jdbc:h2:mem:split_" + secrets.token_hex(8) + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
@@ -124,10 +130,10 @@ def main():
                 time.sleep(.1)
             else:
                 raise AssertionError("Frontend did not become ready")
-            index = (ADMIN_ROOT / "dist/index.html").read_bytes()
+            index = (frontend_dist / "index.html").read_bytes()
             assert request(web_url + "/admin")[2] == index
             assert request(web_url + "/admin/deep-link")[2] == index
-            for asset in (ADMIN_ROOT / "dist/assets").iterdir():
+            for asset in (frontend_dist / "assets").iterdir():
                 response = request(web_url + "/assets/" + asset.name)
                 assert response[0] == 200 and response[2] == asset.read_bytes()
                 assert "immutable" in response[1]["Cache-Control"]
@@ -147,31 +153,6 @@ def main():
                 assert request(origin + "/media/ritual.webp")[0] == 200
             CHECKS.append("Both origins proxy login and JWT API calls, preserve media and reject missing API/uploads and public actuator")
             assert request(f"http://127.0.0.1:{booking_port}/")[0] == 404
-            browser_script = """
-import {chromium} from 'playwright';
-const browser=await chromium.launch({headless:true});
-try {
- const page=await browser.newPage({viewport:{width:2560,height:1440}});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(process.env.SPLIT_WEB+'/admin');
- await page.locator('input').first().fill('admin');
- await page.locator('input[type=password]').fill(process.env.SPLIT_PASSWORD);
- await page.locator('form button.a-primary').click();
- await page.waitForFunction(()=>!!sessionStorage.getItem('yht-admin-token'));
- await page.waitForSelector('input[type=password]',{state:'detached'});
- await page.locator('.dashboard-welcome').waitFor({state:'visible'});
- await page.locator('.stat-grid .stat-card').first().waitFor({state:'visible'});
- await page.screenshot({path:process.env.SPLIT_SCREENSHOT,fullPage:true});
- if(errors.length)throw new Error(JSON.stringify(errors));
- console.log('Browser admin login passed at 2560x1440');
-} finally {await browser.close();}
-"""
-            browser_env = dict(os.environ, SPLIT_WEB=web_url, SPLIT_PASSWORD=password,
-                               SPLIT_SCREENSHOT=str(OUTPUT / "admin-2560.png"))
-            browser = subprocess.run([shutil.which("node"), "--input-type=module", "-e", browser_script],
-                                     cwd=ADMIN_ROOT, env=browser_env, capture_output=True, timeout=45)
-            assert browser.returncode == 0, browser.stderr.decode(errors="replace")
-            CHECKS.append("Real browser logs into the independently served admin at 2560x1440 without page errors")
             report = {"status": "passed", "createdAt": dt.datetime.now(dt.timezone.utc).isoformat(),
                       "jarSha256": hashlib.sha256(jar.read_bytes()).hexdigest(),
                       "frontendIndexSha256": hashlib.sha256(index).hexdigest(),

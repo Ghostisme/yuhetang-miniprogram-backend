@@ -14,7 +14,7 @@
 | 配置及密钥 | `/etc/yuwatang-reservation.env`，root:root 0600 | 只在服务器修改 |
 | 内部监控 | `127.0.0.1:8791` | 仅服务器内访问 |
 
-首次启动只建立系统表、权限、一个总部管理员和空站点配置；不导入本地门店、客户、预约或演示账号。之后在后台逐步导入。项目提供两个包：`yuhetang-admin-20261107.zip` 和 `yuhetang-java-api-1panel-20261107.tar.gz`，以及各自 `.sha256` 校验文件。证书和真实密钥不在包内。
+首次启动只建立系统表、权限、一个总部管理员和空站点配置；不导入本地门店、客户、预约或演示账号。之后在后台逐步导入。项目分别提供管理后台 ZIP 和 Java API TAR，以及各自 `.sha256` 校验文件。新包使用精确到秒的发布编号；下文以 `20261107-180000` 举例，执行时改成实际包名中的编号。证书和真实密钥不在包内。
 
 ## 第一步：安装 1Panel
 
@@ -34,7 +34,7 @@ bash 1panel-quick-start.sh
 
 用安装完成显示的完整地址登录，包括端口和安全入口。遗忘入口时在服务器执行 `1pctl user-info`，输出只自己保存，不必贴到聊天。业务管理员与 1Panel 管理员是两套账号。
 
-官方当前文档支持基于 Debian/RedHat 的主流 Linux，未单独承诺 Ubuntu 26.04 的测试结果。本地没有替你运行这台服务器的安装；若安装器或 Docker 报错，先保留报错，不要同时混装另一套 Docker、Podman 或宿主 Nginx。
+本地检查不代替目标服务器验收；安装器或 Docker 报错时先保留具体输出，避免混装其他容器引擎或宿主 Nginx。已经安装的服务器直接继续部署或更新，不重复安装面板。
 
 安装后检查：
 
@@ -48,16 +48,24 @@ docker info >/dev/null
 
 ## 第二步：上传并安装 Java API
 
-在 1Panel「文件」把后端 `.tar.gz` 和对应 `.tar.gz.sha256` 上传到 `/root/yuhetang-upload`；前端 ZIP 留到第四步。也可以用 SSH/SFTP 上传。不要上传本地 `data/`、`.env.local`、数据库备份或旧版合并部署包。
+使用腾讯云网页终端的上传按钮时，登录用户是 ubuntu，应先传到 `/home/ubuntu/`。切换 root 不会改变上传按钮使用的身份，不能将 `/root` 改成公开可写。也可以用 1Panel 的 root 文件管理入口上传。
+
+以下示例将已上传的后端包复制到 root 专用目录；前端 ZIP 留到第四步。不上传本地 data、环境密钥或旧版合并包。
 
 在 1Panel「终端」进入 root shell，然后执行：
 
 ```bash
 sudo -i
+YHT_RELEASE_ID=20261107-180000
+install -d -m 0700 /root/yuhetang-upload
+install -o root -g root -m 0600 \
+  "/home/ubuntu/yuhetang-java-api-1panel-${YHT_RELEASE_ID}.tar.gz" \
+  "/home/ubuntu/yuhetang-java-api-1panel-${YHT_RELEASE_ID}.tar.gz.sha256" \
+  /root/yuhetang-upload/
 cd /root/yuhetang-upload
-sha256sum --check yuhetang-java-api-1panel-20261107.tar.gz.sha256
-tar -xzf yuhetang-java-api-1panel-20261107.tar.gz
-cd yuhetang-java-api-1panel-20261107
+sha256sum --check "yuhetang-java-api-1panel-${YHT_RELEASE_ID}.tar.gz.sha256"
+tar -xzf "yuhetang-java-api-1panel-${YHT_RELEASE_ID}.tar.gz"
+cd "yuhetang-java-api-1panel-${YHT_RELEASE_ID}"
 bash prepare.sh
 ```
 
@@ -102,11 +110,12 @@ Java 包不包含后台 `index.html` 和 JS/CSS，只保留 API、迁移和小�
 
 在 1Panel「网站」创建 **静态网站**，主域名填写 `mp-admin.yuhetangtcm.com`。在网站设置查看「网站目录 / 运行目录」，从该入口打开实际目录，不凭空填写其他 Nginx 路径。
 
-将 `yuhetang-admin-20261107.zip` 和 `.zip.sha256` 先传到 `/root/yuhetang-upload`，在终端校验：
+将前端 ZIP 和 `.zip.sha256` 先传到 `/home/ubuntu/`，使用 root 终端校验：
 
 ```bash
-cd /root/yuhetang-upload
-sha256sum --check yuhetang-admin-20261107.zip.sha256
+cd /home/ubuntu
+YHT_RELEASE_ID=20261107-180000
+sha256sum --check "yuhetang-admin-${YHT_RELEASE_ID}.zip.sha256"
 ```
 
 然后使用 1Panel「文件」把 ZIP 解压到刚创建网站的**实际运行目录**，解压后直接看到：
@@ -133,9 +142,9 @@ ls -lah /opt/1panel/www/sites/mp-admin/index
 
 在该网站「配置文件」的现有 `server { ... }` 内，加入后端包中的 `admin.locations.conf` 内容。保留面板的 `listen`、`server_name`、`root`、SSL 和已有 include；如果已有 `location /`，用提供的 `location /` 替换它，不要重复添加。若该 server 已有 `client_max_body_size`，在原位置改为 `6m`，不重复声明。不要把此片段当成整个网站配置文件覆盖保存，也不要在「反向代理」再建立第二条 `/api/`。
 
-这个配置让 `/admin` 和前端路由回到静态 index.html，`/api/` 与 `/uploads/` 原路径转发 Java。未知 API 不会错误返回 HTML。哈希资源长期缓存，首页每次检查更新。首页 `/` 仍是现有 H5 客户预览，管理后台请使用 `/admin`。
+这个配置让 `/admin` 和前端路由回到静态 index.html，`/api/` 与 `/uploads/` 原路径转发 Java。未知 API 不会错误返回 HTML。哈希资源长期缓存，首页每次检查更新。首页 `/` 和 `/admin` 都进入管理后台。客户 H5 在独立 Taro 工程构建与发布。
 
-**代理连通检查：** 官方当前 OpenResty 应用使用 host 网络，才能转到宿主机 `127.0.0.1:8790`。先查找实际容器名，再检查：
+**代理连通检查：** 本流程使用 OpenResty 的 host 网络转发宿主机 `127.0.0.1:8790`；用户提供的容器检查结果也已确认是 host。其他安装先查找实际容器名，再检查：
 
 ```bash
 docker ps --format '{{.Names}}  {{.Image}}'
@@ -143,7 +152,7 @@ docker ps --format '{{.Names}}  {{.Image}}'
 docker inspect --format '{{.HostConfig.NetworkMode}}' OPENRESTY_CONTAINER
 ```
 
-预期输出 `host`。若是 `bridge`，先在面板核对 OpenResty 的网络配置；不要将 Java 改成监听公网来解决 502。本流程按官方应用的 host 网络编写。
+预期输出 `host`。若是 `bridge`，先在面板核对 OpenResty 的网络配置；不要将 Java 改成监听公网来解决 502。本流程按已确认的 host 网络编写。
 
 ## 第五步：配置 booking 接口网站及 HTTPS
 
@@ -151,7 +160,7 @@ docker inspect --format '{{.HostConfig.NetworkMode}}' OPENRESTY_CONTAINER
 
 1Panel「证书」中导入已有泛域名证书：证书内容对应 `fullchain.pem`，私钥内容对应 `privkey.key`。在自己电脑与已登录面板之间操作，不把私钥发送到聊天。然后在两个网站各自的 HTTPS 设置选择这张证书、启用 HTTPS，并在确认可访问后开启 HTTP 跳转 HTTPS。
 
-这张证书覆盖 `*.yuhetangtcm.com`，可同时用于 mp-admin 和 booking；当前有效期到 **2027-01-22 15:16:02（北京时间）**，续期后需在面板更新。导入现有证书不等于已配置自动续期。
+这张证书覆盖 `*.yuhetangtcm.com`，可同时用于 mp-admin 和 booking；有效期以面板和实际证书为准，续期后需在面板更新。导入现有证书不等于已配置自动续期。
 
 面板保存时进行配置检查；若提示重复 location 或重复参数，处理该新网站的重复项后重新检查，不要覆盖面板全局配置。需要终端检查时，只对前面确认的 OpenResty 容器执行：
 
@@ -174,7 +183,7 @@ curl -I https://booking.yuhetangtcm.com/actuator/health
 
 ## 第六步：之后再接小程序和客服
 
-先完成上面的管理后台、接口及少量数据验收，再处理小程序。当前客户端默认连接 `https://booking.yuhetangtcm.com`，包括微信开发者工具；本地联调才显式启用小程序仓库 `config.js` 的 `useLocalBackend`。
+先完成上面的管理后台、接口及少量数据验收，再处理小程序。当前客户端默认连接 `https://booking.yuhetangtcm.com`，包括微信开发者工具；Taro 构建可通过 `TARO_APP_API_BASE` 指定 API。本地 H5 使用代理；模拟登录须显式开启 `TARO_APP_DEV_LOGIN=true`，且后端为 local 模式，正式构建禁用模拟登录。不再维护旧 `config.js`。
 
 小程序服务器域名中，request 填 booking HTTPS；uploadFile 按当前上传路径填 booking；downloadFile 按实际使用加入 booking 与 `https://static.yuhetangtcm.com`。现有后端上传仍保存到本项目 uploads，不能仅配置 static 合法域名就认为已实现 OSS 直传。WebSocket 域名仅在客户端实际使用 WebSocket 后配置。
 
@@ -197,22 +206,21 @@ curl -I https://booking.yuhetangtcm.com/actuator/health
 
 备份位于 `/var/backups/yuwatang-reservation`，含数据库、上传及环境配置，需要另外保存到受控的异地位置；JAR 按前述步骤另行保留。restore-check 使用另一个校验容器，不覆盖在线库。容器与 Java 的开停由本项目 systemd 单元协调；在 1Panel 里查看容器可以，但不要随意删除、重建或重复启用它的其他守护方式。面板更新或 Docker 维护后，再检查两个项目服务和 health。
 
-构建命令（在开发电脑项目目录执行）：
+开发电脑分别进入对应仓库构建，不要求相邻工程存在：
 
 ```powershell
-Push-Location ../yuhetang-miniprogram-admin
+# 管理后台仓库
 npm ci
 npm run build
-Pop-Location
-New-Item -ItemType Directory -Force logs | Out-Null
-Push-Location ../yuhetang-miniprogram
-npm run check:mini | Tee-Object ../yuhetang-miniprogram-backend/logs/1panel-mini-check-20261107.log
-Pop-Location
+npm run package:release
+# Java 仓库；运行包需先自行准备并匹配脚本固定 SHA256
 mvn -B -ntp -Papi-release verify
-python tools/verify-tencent-isolation.py
-python tools/verify-1panel-split.py
-python tools/package-1panel.py --release-date 20261107
+python tools/package-1panel.py --java-runtime D:/deploy/java17-linux-x64.tar.gz
+# 可选：显式指定后台产物进行本机代理联合验收
+python tools/verify-1panel-split.py --frontend-dist D:/deploy/admin-dist
 ```
+
+发布编号默认使用当前时间；也可为两个打包命令传入 `--release-id YYYYMMDD-HHMMSS`。不覆盖旧包。Taro 的微信与 H5 构建在小程序仓库独立执行，不参与后台或 Java 打包。
 
 Java 测试使用隔离 H2，不接本地业务库；云端 MySQL 8.4、1Panel、证书和真实微信投递仍须按上面步骤验收。当前单机资源用于先跑通业务，5 万同时在线需另在目标云环境压测与扩容，不能由安装面板来证明。
 

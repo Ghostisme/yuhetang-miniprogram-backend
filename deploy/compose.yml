@@ -2,8 +2,8 @@ name: yuwatang
 x-app: &app
   image: yuwatang-reservation:local
   build:
-    context: ../..
-    dockerfile: yuhetang-miniprogram-backend/Dockerfile
+    context: ..
+    dockerfile: Dockerfile
   restart: unless-stopped
   init: true
   stop_grace_period: 40s

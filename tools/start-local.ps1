@@ -1,9 +1,7 @@
-param([switch]$Build, [switch]$Lan, [ValidateRange(1024,65535)][int]$Port = 8790, [string]$AdminPath = '')
+param([switch]$Build, [switch]$Lan, [ValidateRange(1024,65535)][int]$Port = 8790)
 $ErrorActionPreference = 'Stop'
 $backendRoot = Split-Path -Parent $PSScriptRoot
-if (!$AdminPath) { $AdminPath = Join-Path (Split-Path -Parent $backendRoot) 'yuhetang-miniprogram-admin' }
-$AdminPath = [IO.Path]::GetFullPath($AdminPath)
-$jarPath = Join-Path $backendRoot 'target\reservation-1.0.0.jar'
+$jarPath = Join-Path $backendRoot 'target-api\reservation-api-1.0.0.jar'
 $dataRoot = Join-Path $backendRoot 'data'
 $logRoot = Join-Path $backendRoot 'logs'
 $statePath = Join-Path $dataRoot "local-server-$Port.json"
@@ -31,24 +29,16 @@ if ($listeners.Count -gt 0) {
         $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
         $running = Get-CimInstance Win32_Process -Filter "ProcessId = $($state.pid)"
         if ($running -and $running.CommandLine.Contains($jarPath) -and $listeners.OwningProcess -contains $state.pid) {
-            Write-Output "Already running: http://127.0.0.1:$Port/ | http://127.0.0.1:$Port/admin"
+            Write-Output "Already running: http://127.0.0.1:$Port/api/health"
             exit 0
         }
     }
     throw "Port $Port is in use. The launcher will not stop an untracked process."
 }
 if ($Build -or !(Test-Path -LiteralPath $jarPath)) {
-    if (!(Test-Path -LiteralPath (Join-Path $AdminPath 'package.json'))) { throw 'Admin repository not found. Clone it beside this repository or pass -AdminPath.' }
-    Push-Location $AdminPath
-    try {
-        & npm.cmd ci
-        if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
-        & npm.cmd run build
-        if ($LASTEXITCODE -ne 0) { throw 'Frontend build failed' }
-    } finally { Pop-Location }
     Push-Location $backendRoot
     try {
-        & mvn.cmd -Prelease package ("-Dfrontend.dist=" + (Join-Path $AdminPath 'dist'))
+        & mvn.cmd -B -ntp -Papi-release package
         if ($LASTEXITCODE -ne 0) { throw 'Java package failed' }
     } finally { Pop-Location }
 }
@@ -61,8 +51,8 @@ for ($attempt=0; $attempt -lt 45; $attempt++) {
     try {
         $health = Invoke-RestMethod "http://127.0.0.1:$Port/api/health" -TimeoutSec 2
         if ($health.status -eq 'ok') {
-            Write-Output "Customer: http://127.0.0.1:$Port/"
-            Write-Output "Admin:    http://127.0.0.1:$Port/admin"
+            Write-Output "Java API: http://127.0.0.1:$Port/api/health"
+            Write-Output 'Start the admin Vite server and Taro project separately in their own repositories.'
             Write-Output 'Local accounts: admin / yuyao / bailemen / frontdesk; password: Yht@9800dev'
             Write-Output ('Database and uploads: ' + $dataRoot)
             exit 0
