@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!reservation.jar
+!entrypoint.sh
+!healthcheck.sh
+!check-db-target.sh

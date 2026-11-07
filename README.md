@@ -49,11 +49,10 @@ powershell -ExecutionPolicy Bypass -File ./tools/stop-local.ps1
 
 ```powershell
 mvn -B -ntp -Papi-release verify
-# 自行准备并指定脚本要求的 Java 17 Linux x64 运行包
-python tools/package-1panel.py --java-runtime D:/deploy/java17-linux-x64.tar.gz
+python tools/package-java.py
 ```
 
-测试使用隔离 H2 内存库。本轮 100 项 Java 测试通过；发布脚本检查测试报告、空生产初始化、包内容及 SHA256。发布编号默认精确到秒，也可传 --release-id YYYYMMDD-HHMMSS，不覆盖已有同名包。产物写入忽略的 releases/，不携带业务数据、证书私钥或真实密钥。后台 ZIP 在后台仓库独立生成。
+测试使用隔离 H2 内存库。发布脚本检查至少 100 项 Java 测试、空生产初始化、API 包内容及 SHA256，分别生成独立 JAR 和纯 Java Docker 压缩包。Docker 包只包含 JAR、Java 镜像构建及运行工具，不包含 OpenResty、Nginx、数据库安装器、管理后台或证书。发布编号默认精确到秒，也可传 --release-id YYYYMMDD-HHMMSS，不覆盖已有同名包。产物写入忽略的 releases/，不携带业务数据、证书私钥或真实密钥。后台 ZIP 在后台仓库独立生成。
 
 可选的跨工程代理验收须显式传入已构建的静态文件路径；该检查不参与普通构建或打包：
 
@@ -61,7 +60,9 @@ python tools/package-1panel.py --java-runtime D:/deploy/java17-linux-x64.tar.gz
 python tools/verify-1panel-split.py --frontend-dist D:/deploy/admin-dist
 ```
 
-Dockerfile 也只以本仓库为构建上下文。部署采用独立 Java systemd 服务、独立 MySQL 容器、1Panel 静态后台，详见 [1Panel 部署与更新](deploy/1panel/README.md) 和 [三仓库说明](docs/三仓库开发与发布.md)。日常更新不重复执行首次安装脚本；升级前备份本项目数据库、上传、环境配置及旧 JAR，并检查备份可恢复。
+当前推荐 [纯 Java Docker 部署与迁移](deploy/docker-java/README.md)：复用已有独立 MySQL 和上传目录，只把 Java 应用切换为 Docker。管理后台和现有网关另行管理，后端发布不操作网站、TLS 或数据库容器。根 Dockerfile 供开发者从本仓库源码构建；发布包的 Dockerfile 直接复制已验证的 JAR，不需要服务器安装 Maven。
+
+此前 [1Panel 首次安装流程](deploy/1panel/README.md) 和 tools/package-1panel.py 保留供历史部署参考，已经运行的服务器不再执行 prepare.sh。升级前备份本项目数据库、上传、环境配置及旧版本，并检查备份可恢复，详见 [三仓库说明](docs/三仓库开发与发布.md)。Docker 化不解决未备案域名被云厂商拦截的问题，公网域名需单独验收。
 
 业务 API 使用 booking.yuhetangtcm.com；管理后台使用 mp-admin.yuhetangtcm.com/admin；仅微信客服回调使用 https://booking.hetuonian.cn/api/wechat/customer-service。正式环境设置 APP_MODE=production、独立 ADMIN_PASSWORD 和 JWT_SECRET，真实凭证仅放服务器环境文件。
 

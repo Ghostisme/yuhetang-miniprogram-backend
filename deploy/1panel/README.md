@@ -1,5 +1,7 @@
 # 裕和堂：Ubuntu + 1Panel，前端与 Java 分开部署
 
+> 本页保留历史首次安装流程。已运行服务器当前改用 [纯 Java Docker 部署与迁移](../docker-java/README.md)，使用 tools/package-java.py 生成独立 JAR / Docker 包，复用现有 MySQL 和上传目录；不重复安装 1Panel，不执行 prepare.sh，不修改已配置的网站。
+
 适用本次重装后的 Ubuntu 26.04 LTS / x86_64 / 8GB 服务器。公网 IP 沿用 `43.142.125.157`，请以腾讯云控制台实际公网 IP 为准。此前 TencentOS、旧 Nginx 路径和宝塔流程均不用于本次安装。
 
 这是三个独立部分：1Panel 的 OpenResty 提供管理后台静态页面和 HTTPS；Java 17 API 作为独立 systemd 服务；MySQL 8.4 使用独立 Docker 容器。Java 的启动、重启和日志通过 1Panel「终端」执行 systemctl/journalctl 管理，本方案没有创建 1Panel「Java 运行环境」，不要再启动第二份 Java。前端网站不需要 Node.js、npm 或 Maven。
