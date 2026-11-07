@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "source": "https://www.yuhetangtcm.com/",
+  "sourceApi": "https://www.yuhetangtcm.com/api.php/ygame/store/index?page=1&limit=50",
+  "capturedAt": "2026-11-07T10:56:56.952072+00:00",
+  "notes": [
+    "使用官网门店接口的结构化地址。余姚路店 address 为余姚路750号2楼，但 directions 为790号；未导入 directions，需品牌方核对。",
+    "营业时间为公开展示信息，不替代已有预约时段及名额规则。",
+    "官网每店提供一张门店封面，初始化门店封面和相册均使用对应照片。"
+  ],
+  "stores": [
+    {
+      "id": "bai-le-men",
+      "name": "百乐门店",
+      "district": "静安区",
+      "address": "静安区南京西路1728号百乐门大都会11楼",
+      "phone": "021-62310862",
+      "hours": "9:30–23:00",
+      "tag": "静安寺旁、百乐门里——在老上海地标里做一场中式调理。",
+      "description": "开在百乐门这一上海人熟悉的地标。2014年开业至今，已是静安寺商圈口碑最厚的养生去处之一：花格漏光吊顶、中药百子柜前台、罗汉榻茶室。27间理疗房，也常接待慕名而来的外国客人。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/bailemen",
+      "sourceId": 9,
+      "photo": {
+        "file": "photos/bai-le-men.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/0e2c47b0284d55e3400b5da27a8321c0.jpg",
+        "sha256": "6bef27f1c429605cc7a5a76e937a92c34bd9f48d5494b67a45c1ea62bb88eb77",
+        "bytes": 138311,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "yuyao",
+      "name": "余姚路店",
+      "district": "静安区",
+      "address": "静安区余姚路750号2楼",
+      "phone": "021-33533572",
+      "hours": "9:30–23:00",
+      "tag": "2009年的第一家裕和堂——创始首店，艾香未改。",
+      "description": "2009年12月，裕和堂的故事从这里开始。余姚路店是品牌创始首店，多年来服务曹家渡一带的街坊。门面不大，进店别有洞天：月洞门、名医挂画、自种艾草陈列。想体验最原味的裕和堂，来创始店。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/yuyao",
+      "sourceId": 8,
+      "photo": {
+        "file": "photos/yuyao.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/5c053d89363c6386086e3a1cbcb48095.jpg",
+        "sha256": "5c9ada4e8fccb22062114bb7dfe544c5b081c46b2ccd6a5cfca6b6b1b1588668",
+        "bytes": 97455,
+        "width": 1600,
+        "height": 851
+      }
+    },
+    {
+      "id": "huashan",
+      "name": "华山路店",
+      "district": "长宁区",
+      "address": "长宁区华山路800弄丁香公寓6号裙楼5楼501室",
+      "phone": "021-62268933",
+      "hours": "9:30–23:00",
+      "tag": "武康路的漫步，收尾在一张理疗床上。",
+      "description": "从武康路的梧桐树影走出来不远即是华山路店。2025年迁址焕新，32间理疗房、配淋浴房，是裕和堂规模最大的门店；逛完安福路、武康路的疲惫可在此彻底卸下。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/huashan",
+      "sourceId": 10,
+      "photo": {
+        "file": "photos/huashan.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/0abf79e06049b30ea8f97fe57be4efe0.jpg",
+        "sha256": "d13f3e88f9415936c1c7c502a1d8ae63d09fda980331e0d6f2e2b8503a6f94b3",
+        "bytes": 177503,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "taikoo",
+      "name": "太古汇店",
+      "district": "静安区",
+      "address": "静安区青海路118号云海苑29楼",
+      "phone": "021-52799673",
+      "hours": "9:00–23:00",
+      "tag": "南京西路上空29层——闹市顶上的一方静境。",
+      "description": "在南京西路商圈第29层，把喧嚣关在电梯之外。2018年开业，红木与灰砖、罗汉榻与黑石前台，是裕和堂「闹中取静」的代表门店，也适合商务接待。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/taiguhui",
+      "sourceId": 11,
+      "photo": {
+        "file": "photos/taikoo.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/9eb481ac4bbf77ee919075ccb0e44793.jpg",
+        "sha256": "5f416135ddd3f335c636dabfbf2452b85c1abdf42a0c505cb31e2a94bef018b1",
+        "bytes": 191307,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "wujiang",
+      "name": "吴江路店",
+      "district": "静安区",
+      "address": "静安区南京西路993号锦江向阳大楼18楼A室",
+      "phone": "18521945341",
+      "hours": "9:30–23:00",
+      "tag": "地铁口90米——上班族的午间「回血站」。",
+      "description": "南京西路站14口出来90米即到，大概是裕和堂最方便的一家。蓝墙金标、月洞门走廊，小而精致。工作日午间11:30–13:30最热闹——午休做一节60分钟推拿，下午照样精神。午间高峰建议提前预约。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/wujianglu",
+      "sourceId": 12,
+      "photo": {
+        "file": "photos/wujiang.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/b2ac9fc1924061fc30235e399c5f0634.jpg",
+        "sha256": "25f63af0620a8a4a4d7cfaf857ea22f50452b6afb3fda328dc3f75aef18ffa54",
+        "bytes": 133523,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "shanghai",
+      "name": "上海中心店",
+      "district": "浦东新区",
+      "address": "浦东新区花园石桥路158号上海中心大厦B1层7室",
+      "phone": "021-50181919",
+      "hours": "9:00–23:00",
+      "tag": "把「散架」的自己，在上海之巅拼回来。",
+      "description": "2022年入驻上海中心大厦，在中国第一高楼里开一家中医养生馆。空间以「人在水间行走」为意象：水景、水墨屏风、原木理疗间，并配智能净烟艾灸设备。2026年完成扩店，28间理疗房。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/shanghai-center",
+      "sourceId": 13,
+      "photo": {
+        "file": "photos/shanghai.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/a1296bf86f7e248edba8f24b102c9af7.jpg",
+        "sha256": "7eeb144eab8672fd3b98a559db750ae2ea9f5eaa1135f82ae3558791c03209bf",
+        "bytes": 201780,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "meihua",
+      "name": "梅花路店",
+      "district": "浦东新区",
+      "address": "浦东新区梅花路1019号",
+      "phone": "021-58560050",
+      "hours": "9:00–23:00",
+      "tag": "世纪公园旁——浦东家庭与会展客的梅花路中医诊所。",
+      "description": "2025年开业，位于浦东梅花路，邻近世纪公园与上海新国际博览中心。独立理疗隔间、免费养生茶点，服务标准与其他直营店一致：扶阳艾灸、中医推拿、草本精油SPA、香薰足疗及传统调理，服务周边家庭与会展访客。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/meihua",
+      "sourceId": 14,
+      "photo": {
+        "file": "photos/meihua.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/fc1f9abb4fb578a874ce245a5133d74b.jpg",
+        "sha256": "35f75b2a0a37512d59f51bb2e14d66b0dd8f6017fde0f9ca8d279f94e81acc35",
+        "bytes": 145884,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "sichuan",
+      "name": "四川北路店",
+      "district": "虹口区",
+      "address": "虹口区四川北路888号303室",
+      "phone": "18917108817",
+      "hours": "9:00–23:00",
+      "tag": "北外滩的新据点——虹口人的裕和堂来了。",
+      "description": "2026年，裕和堂落地北外滩，把多年的直营标准带进虹口。空间明亮干净，14间理疗房；客人以周边白领、居民及沿四川北路逛到北外滩的游客为主。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/sichuanbei",
+      "sourceId": 15,
+      "photo": {
+        "file": "photos/sichuan.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/f6a75d528246ca9f906b2288d4186ea0.jpg",
+        "sha256": "0280c8568564ae754912592d3996fcbda0ad20905d1249927d33e9d5cabfb1d7",
+        "bytes": 172187,
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "changde",
+      "name": "常德路店",
+      "district": "静安区",
+      "address": "静安区常德路1010号2层",
+      "phone": "021-62078806",
+      "hours": "9:30–23:00",
+      "tag": "东方禅意的静养空间——新店，老手艺。",
+      "description": "2026年开业，是9家店里最「静」的一家：深色木饰面、微水泥墙面、枯山水造景。服务同乐坊、江宁路一带社区，18间理疗房，没有商圈店的匆忙。",
+      "sourcePage": "https://www.yuhetangtcm.com/stores/changde",
+      "sourceId": 16,
+      "photo": {
+        "file": "photos/changde.jpg",
+        "sourceUrl": "https://www.yuhetangtcm.com/uploads/20261015/01b3d041bf50a58a16c46aac174b2bdd.jpg",
+        "sha256": "31e325a66395f59b72dc125a836c3d22892c2811c6c9479aace9117ccc1b0771",
+        "bytes": 192027,
+        "width": 1600,
+        "height": 1067
+      }
+    }
+  ]
+}
