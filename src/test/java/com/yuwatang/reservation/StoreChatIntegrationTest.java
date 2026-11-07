@@ -295,6 +295,19 @@ class StoreChatIntegrationTest {
         verify(wx,times(1)).customerImage("fixture-image-media");
     }
 
+    @Test void diagnosticCallbackProbeDoesNotCreateBusinessDataOrSendMessages()throws Exception{
+        var probe=inbound("event",epoch());probe.put("Event","yht_diagnostic_probe");
+        callback(probe,200);
+        String timestamp=Long.toString(epoch()),nonce=id(),encrypted=encrypt(d.stringify(probe),"wx-chat-test");
+        assertEquals("success",response(mvc.perform(post("/api/wechat/customer-service")
+            .param("timestamp",timestamp).param("nonce",nonce)
+            .param("signature",signature(timestamp,nonce,null)).param("msg_signature",signature(timestamp,nonce,encrypted))
+            .contentType("application/json").content(d.stringify(Map.of("Encrypt",encrypted)))),200));
+        for(String table:List.of("chat_conversation","chat_route","chat_message","chat_receipt","chat_entry"))
+            assertEquals(0,d.count("SELECT COUNT(*) FROM "+table),table);
+        verifyNoInteractions(wx);
+    }
+
     @Test void callbacksRejectInvalidSignaturesPlaintextAndWrongApplication()throws Exception{
         String timestamp=Long.toString(epoch()),nonce="nonce-test";
         assertEquals("echo-value",response(mvc.perform(get("/api/wechat/customer-service").param("timestamp",timestamp).param("nonce",nonce)
