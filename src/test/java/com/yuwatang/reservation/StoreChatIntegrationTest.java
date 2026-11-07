@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.web.servlet.*;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import javax.crypto.Cipher;
@@ -35,6 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
     "app.wechat.customer-template=","app.wechat.service-template="
 })
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StoreChatIntegrationTest {
     @Autowired MockMvc mvc; @Autowired Data d; @Autowired AuthService auth;
@@ -308,6 +312,38 @@ class StoreChatIntegrationTest {
         verifyNoInteractions(wx);
     }
 
+    @Test void xmlCustomerTextInsideJsonEnvelopeIsStoredAndItsOutcomeLoggedWithoutCustomerData(CapturedOutput output)throws Exception{
+        String cid=nativeEntry("yuyao",epoch());
+        String privateText="客服链路测试 & 养护咨询 <正文>";
+        String inner="<xml><ToUserName><![CDATA[fixture-app-original-id]]></ToUserName><FromUserName><![CDATA["+openid+"]]></FromUserName><CreateTime>"+epoch()+"</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA["+privateText+"]]></Content><MsgId>7890123456789012345</MsgId></xml>";
+        String timestamp=Long.toString(epoch()),nonce=id(),encrypted=encrypt(inner,"wx-chat-test");
+        int start=output.getAll().length();
+        for(int attempt=0;attempt<2;attempt++)assertEquals("success",response(mvc.perform(post("/api/wechat/customer-service")
+            .param("timestamp",timestamp).param("nonce",nonce).param("msg_signature",signature(timestamp,nonce,encrypted))
+            .contentType("application/json").content(d.stringify(Map.of("Encrypt",encrypted)))),200));
+        assertEquals(1,d.count("SELECT COUNT(*) FROM chat_message WHERE conversation_id=? AND direction='IN'",cid));
+        assertEquals(privateText,chat.messages(cid,0,0).get(0).get("content"));
+        assertEquals(5,integer(conversation(cid),"replyRemaining",0));
+        String logs=output.getAll().substring(start);
+        assertTrue(logs.contains("WeChat callback type=text event=none outcome=STORED"));
+        assertTrue(logs.contains("WeChat callback type=text event=none outcome=DUPLICATE"));
+        for(String value:List.of(openid,privateText,encrypted,"7890123456789012345"))assertFalse(logs.contains(value));
+    }
+
+    @Test void rejectedAndUnsupportedCallbacksAreLoggedWithoutLeakingTheirFields(CapturedOutput output)throws Exception{
+        String timestamp=Long.toString(epoch()),nonce=id();
+        var unsupported=inbound("event",epoch());unsupported.put("Event","private-event\nprivate-body");
+        int start=output.getAll().length();
+        callback(unsupported,200);
+        response(mvc.perform(post("/api/wechat/customer-service").param("timestamp",timestamp).param("nonce",nonce).param("msg_signature","invalid-signature")
+            .contentType("application/json").content(d.stringify(Map.of("Encrypt",encrypt(d.stringify(unsupported),"wx-chat-test"))))),403);
+        String logs=output.getAll().substring(start);
+        assertTrue(logs.contains("WeChat callback type=event event=other outcome=IGNORED"));
+        assertTrue(logs.contains("outcome=REJECTED http=403"));
+        for(String value:List.of("private-event","private-body",openid,"invalid-signature",nonce))assertFalse(logs.contains(value));
+        for(String table:List.of("chat_receipt","chat_conversation","chat_message"))assertEquals(0,d.count("SELECT COUNT(*) FROM "+table));
+    }
+
     @Test void callbacksRejectInvalidSignaturesPlaintextAndWrongApplication()throws Exception{
         String timestamp=Long.toString(epoch()),nonce="nonce-test";
         assertEquals("echo-value",response(mvc.perform(get("/api/wechat/customer-service").param("timestamp",timestamp).param("nonce",nonce)
@@ -358,6 +394,22 @@ class StoreChatIntegrationTest {
         assertEquals("UNKNOWN",reply(cid,"网络中断","unknown-reply-01").get("deliveryStatus"));
         assertEquals("UNKNOWN",reply(cid,"网络中断","unknown-reply-01").get("deliveryStatus"));
         verify(wx,times(1)).sendCustomerText(openid,"微信拒收");verify(wx,times(1)).sendCustomerText(openid,"网络中断");
+    }
+
+    @Test void specificTransportFailureIsVisibleToAdminAndLoggedWithoutRetryOrCustomerData(CapturedOutput output)throws Exception{
+        String cid=nativeEntry("yuyao",epoch());nativeText("请介绍项目",epoch(),"diagnostic-inbound-001");
+        when(wx.sendCustomerText(eq(openid),eq("private reply body"))).thenThrow(new WechatGateway.ExchangeException("READ_TIMEOUT","等待微信接口响应超时。"));
+        int start=output.getAll().length();
+        var result=reply(cid,"private reply body","diagnostic-outbound-001");
+        assertEquals("UNKNOWN",result.get("deliveryStatus"));assertTrue(str(result,"errorMessage").contains("响应超时"));
+        assertTrue(str(result,"errorMessage").contains("避免重复发送"));
+        assertEquals(4,integer(conversation(cid),"replyRemaining",0));
+        assertEquals(result.get("id"),reply(cid,"private reply body","diagnostic-outbound-001").get("id"));
+        verify(wx,times(1)).sendCustomerText(openid,"private reply body");
+        String logs=output.getAll().substring(start);
+        assertTrue(logs.contains("state=UNKNOWN category=READ_TIMEOUT"));
+        assertTrue(logs.contains(str(result,"id")));
+        for(String value:List.of(openid,"private reply body","diagnostic-outbound-001"))assertFalse(logs.contains(value));
     }
 
     @Test void concurrentRepliesCannotOverspendTheWechatQuota()throws Exception{

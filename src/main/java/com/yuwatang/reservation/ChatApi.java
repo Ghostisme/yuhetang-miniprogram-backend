@@ -8,10 +8,26 @@ import static com.yuwatang.reservation.Data.*;
 
 @RestController
 class ChatApi {
+    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(ChatApi.class);
     final ChatService chat;final AuthService auth;final WechatMessageCodec codec;
     ChatApi(ChatService c,AuthService a,WechatMessageCodec w){chat=c;auth=a;codec=w;}
     @GetMapping(value="/api/wechat/customer-service",produces="text/plain")String verify(@RequestParam String signature,@RequestParam String timestamp,@RequestParam String nonce,@RequestParam String echostr){codec.verify(signature,timestamp,nonce,null);if(echostr.length()>1000)throw error(400,"校验内容过长。");return echostr;}
-    @PostMapping(value="/api/wechat/customer-service",produces="text/plain")String receive(@RequestBody String body,@RequestParam(required=false)String signature,@RequestParam(required=false)String msg_signature,@RequestParam String timestamp,@RequestParam String nonce){chat.receive(codec.decode(body,signature,msg_signature,timestamp,nonce));return "success";}
+    @PostMapping(value="/api/wechat/customer-service",produces="text/plain")String receive(@RequestBody String body,@RequestParam(required=false)String signature,@RequestParam(required=false)String msg_signature,@RequestParam String timestamp,@RequestParam String nonce){
+        String type="unverified",event="unverified";
+        try{
+            var payload=codec.decode(body,signature,msg_signature,timestamp,nonce);
+            type=diagnosticValue(str(payload,"MsgType"),Set.of("text","image","miniprogrampage","event"));
+            event=diagnosticValue(str(payload,"Event"),Set.of("user_enter_tempsession","yht_diagnostic_probe"));
+            String outcome=chat.receive(payload);
+            log.info("WeChat callback type={} event={} outcome={}",type,event,outcome);
+            return "success";
+        }catch(org.springframework.web.server.ResponseStatusException e){
+            log.warn("WeChat callback type={} event={} outcome=REJECTED http={}",type,event,e.getStatusCode().value());throw e;
+        }catch(RuntimeException e){
+            log.warn("WeChat callback type={} event={} outcome=ERROR exception={}",type,event,e.getClass().getSimpleName());throw e;
+        }
+    }
+    static String diagnosticValue(String value,Set<String> allowed){return value.isBlank()?"none":allowed.contains(value)?value:"other";}
     @PostMapping("/api/me/chat/entry")Map<String,Object> entry(HttpServletRequest r,@RequestBody Map<String,Object> in){return chat.entry(auth.customer(r),str(in,"storeId"));}
     @PostMapping("/api/me/chats")Map<String,Object> open(HttpServletRequest r,@RequestBody Map<String,Object> in){return chat.webOpen(auth.customer(r),str(in,"storeId"));}
     @GetMapping("/api/me/chats/{id}/messages")Map<String,Object> mine(HttpServletRequest r,@PathVariable String id,@RequestParam(defaultValue="0")long after,@RequestParam(defaultValue="0")long before){chat.owned(auth.customer(r),id);return Map.of("items",chat.messages(id,after,before));}

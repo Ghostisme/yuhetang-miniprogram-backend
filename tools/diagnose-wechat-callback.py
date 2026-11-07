@@ -73,8 +73,10 @@ def envelope(key_text, app_id):
     return base64.b64encode(result.stdout).decode('ascii')
 
 
-def request(label, base, token, encrypted=None):
+def request(label, base, token, encrypted=None, trace=None):
     timestamp, nonce = str(int(time.time())), os.urandom(12).hex()
+    if trace is not None:
+        trace['nonce'] = nonce
     params = {'timestamp': timestamp, 'nonce': nonce}
     params['signature'] = signature(token, timestamp, nonce)
     expected = 'YHT_CALLBACK_CHECK_' + os.urandom(8).hex()
@@ -113,26 +115,59 @@ def request(label, base, token, encrypted=None):
     return passed
 
 
-def recent_posts():
-    path = Path('/opt/1panel/www/sites/wechat-callback/log/access.log')
-    if not path.is_file():
+def proxy_container(requested):
+    if requested:
+        return requested
+    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}} {{.Image}}'], capture_output=True, timeout=10)
+    names = [line.split()[0] for line in result.stdout.decode('utf-8', 'replace').splitlines()
+             if 'openresty' in line.lower()]
+    return names[0] if result.returncode == 0 and len(names) == 1 else None
+
+
+def proxy_log(container):
+    result = subprocess.run(['docker', 'exec', container, 'tail', '-c', '262144',
+                             '/www/sites/wechat-callback/log/access.log'], capture_output=True, timeout=5)
+    return result.stdout.decode('utf-8', 'replace') if result.returncode == 0 else None
+
+
+def recent_posts(expected_nonce, path=Path('/opt/1panel/www/sites/wechat-callback/log/access.log'), wait_seconds=6, reader=None):
+    if reader is None and not path.is_file():
         print('Access log: expected file not found; use the active site log path in 1Panel.')
-        return
+        return False
     # Read a bounded tail; output only timestamps, method, path and status.
-    with path.open('rb') as stream:
-        stream.seek(0, 2)
-        stream.seek(max(0, stream.tell() - 262144))
-        lines = stream.read().decode('utf-8', 'replace').splitlines()
+    deadline = time.monotonic() + wait_seconds
+    while True:
+        if reader is not None:
+            content = reader()
+            if content is None:
+                print('Access log could not be read inside the selected OpenResty container.')
+                return False
+        else:
+            with path.open('rb') as stream:
+                stream.seek(0, 2)
+                stream.seek(max(0, stream.tell() - 262144))
+                content = stream.read().decode('utf-8', 'replace')
+        observed = bool(expected_nonce) and ('nonce=' + expected_nonce) in content
+        if observed or time.monotonic() >= deadline:
+            break
+        time.sleep(0.25)
     pattern = r'\[([^\]]+)\]\s+"POST\s+(/api/wechat/customer-service)(?:\?[^\s]*)?\s+HTTP/[^\"]+"\s+(\d{3})'
-    matches = [match.groups() for line in lines if (match := re.search(pattern, line))]
-    print('Recent callback POSTs (includes this diagnostic probe):')
+    matches = [match.groups() for line in content.splitlines() if (match := re.search(pattern, line))]
+    print('Selected access-log snapshot:')
     for stamp, path_text, status in matches[-8:]:
         print('  ' + stamp + ' POST ' + path_text + ' HTTP=' + status)
+    print('Current public POST found in this log: ' + str(observed))
+    if not observed:
+        print('  This file has not been confirmed as the current request log.')
+        print('  Check the active access_log path, logging settings, format and buffering.')
+        print('  Missing entries in this file do NOT establish that WeChat sent no message.')
+    return observed
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--container', default='yuhetang-java-api')
+    parser.add_argument('--proxy-container', help='OpenResty container; auto-detected when exactly one is running')
     parser.add_argument('--public-base', default='https://booking.hetuonian.cn')
     args = parser.parse_args()
     if args.public_base.rstrip('/') != 'https://booking.hetuonian.cn':
@@ -140,6 +175,7 @@ def main():
     env, image = running_config(args.container)
     app_id, token, key = (env.get(name, '') for name in ('WECHAT_APP_ID', 'WECHAT_MESSAGE_TOKEN', 'WECHAT_MESSAGE_AES_KEY'))
     print('UTC: ' + dt.datetime.now(dt.timezone.utc).isoformat())
+    print('China time: ' + dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).isoformat())
     print('Image: ' + image)
     print('AppID matches target: ' + str(app_id == EXPECTED_APP_ID))
     print('AppSecret configured: ' + str(bool(env.get('WECHAT_APP_SECRET', '').strip())))
@@ -150,14 +186,25 @@ def main():
         raise ValueError('The running container configuration does not match this mini program. No probe was sent.')
     encrypted = envelope(key, app_id)
     port = int(env.get('PORT', '8790'))
-    results = []
+    results, public_post_trace = [], {}
     for name, base in [('Local', 'http://127.0.0.1:' + str(port)), ('Public', args.public_base)]:
         results.append(request(name + ' signed GET', base, token))
-        results.append(request(name + ' encrypted POST', base, token, encrypted))
-    recent_posts()
+        results.append(request(name + ' encrypted POST', base, token, encrypted,
+                               public_post_trace if name == 'Public' else None))
+    proxy = proxy_container(args.proxy_container)
+    if proxy:
+        print('Access log reader: OpenResty container ' + proxy)
+        observed = recent_posts(public_post_trace.get('nonce'), reader=lambda: proxy_log(proxy))
+    else:
+        print('OpenResty container is ambiguous or unavailable; specify --proxy-container to check its log.')
+        observed = False
     print('Probe event is ignored before database writes. No customer message or access_token request was sent.')
     if all(results):
-        print('All callback probes passed. Capture a NEW phone message while watching this site log.')
+        print('All callback probes passed.')
+        if observed:
+            print('Capture a NEW phone message while watching this confirmed access log.')
+        else:
+            print('Locate and confirm the active request log before checking NEW phone messages.')
         print('This validates transport/signature/decryption, not real WeChat delivery or storage of customer text.')
     return 0 if all(results) else 1
 

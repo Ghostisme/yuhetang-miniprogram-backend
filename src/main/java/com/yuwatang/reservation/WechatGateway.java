@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,15 +31,32 @@ public class WechatGateway {
     List<String> customerTemplates(){return java.util.stream.Stream.of(customerTemplate,customerReminderTemplate).filter(t->!t.isBlank()).distinct().toList();}
     String customerTemplate(String event){return event.equals("appointment.reminder")&&!customerReminderTemplate.isBlank()?customerReminderTemplate:customerTemplate;}
     String customerMapping(String event){return event.equals("appointment.reminder")&&!customerReminderTemplate.isBlank()&&!customerReminderTemplate.equals(customerTemplate)?"customerReminderTemplateMapping":"customerTemplateMapping";}
+    static class ExchangeException extends ResponseStatusException {
+        final String category;
+        ExchangeException(String category,String reason){super(org.springframework.http.HttpStatus.BAD_GATEWAY,reason);this.category=category;}
+    }
+    static ExchangeException transportFailure(RestClientException failure){
+        if(failure instanceof RestClientResponseException response){int status=response.getStatusCode().value();return new ExchangeException("HTTP_"+status,"微信接口返回 HTTP "+status+"。");}
+        // Never copy exception messages: HTTP client exceptions can include access_token URLs.
+        Throwable cause=failure;
+        for(int depth=0;cause!=null&&depth<12;depth++,cause=cause.getCause()){
+            if(cause instanceof java.net.http.HttpConnectTimeoutException)return new ExchangeException("CONNECT_TIMEOUT","连接微信接口超时。");
+            if(cause instanceof java.net.http.HttpTimeoutException||cause instanceof java.net.SocketTimeoutException)return new ExchangeException("READ_TIMEOUT","等待微信接口响应超时。");
+            if(cause instanceof java.net.UnknownHostException)return new ExchangeException("DNS_FAILURE","服务器无法解析微信接口域名。");
+            if(cause instanceof javax.net.ssl.SSLException)return new ExchangeException("TLS_FAILURE","服务器与微信接口的 TLS 连接失败。");
+            if(cause instanceof java.net.ConnectException)return new ExchangeException("CONNECT_FAILURE","服务器无法连接微信接口。");
+        }
+        return new ExchangeException("TRANSPORT_IO","服务器与微信接口的连接中断或响应读取失败。");
+    }
     Map<String,Object> response(byte[] body){
         // Some WeChat endpoints return a JSON object with a text/plain content type.
         // Parse the payload explicitly instead of selecting a converter by that header.
-        if(body==null||body.length==0)throw error(502,"微信接口未返回响应内容。");
+        if(body==null||body.length==0)throw new ExchangeException("EMPTY_RESPONSE","微信接口未返回响应内容。");
         try{Map<String,Object> result=json.readValue(body,new TypeReference<>(){});if(result==null)throw new IllegalArgumentException();return result;}
-        catch(java.io.IOException|IllegalArgumentException e){throw error(502,"微信接口返回的内容无法解析。");}
+        catch(java.io.IOException|IllegalArgumentException e){throw new ExchangeException("INVALID_RESPONSE","微信接口返回的内容无法解析。");}
     }
-    Map<String,Object> get(String url){try{return response(http.get().uri(url).retrieve().body(byte[].class));}catch(org.springframework.web.client.RestClientException e){throw error(502,"微信接口暂不可用，请稍后重试。");}}
-    Map<String,Object> post(String url,Map<String,Object> body){try{return response(http.post().uri(url).contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(byte[].class));}catch(org.springframework.web.client.RestClientException e){throw error(502,"微信接口暂不可用。");}}
+    Map<String,Object> get(String url){try{return response(http.get().uri(url).retrieve().body(byte[].class));}catch(RestClientException e){throw transportFailure(e);}}
+    Map<String,Object> post(String url,Map<String,Object> body){try{return response(http.post().uri(url).contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(byte[].class));}catch(RestClientException e){throw transportFailure(e);}}
     String login(String code){if(appId.isBlank()||secret.isBlank())throw error(503,"小程序登录尚未配置，请联系管理员完成微信账号接入。");var r=get("https://api.weixin.qq.com/sns/jscode2session?appid="+enc(appId)+"&secret="+enc(secret)+"&js_code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(401,"微信登录未完成，请重新进入小程序。");return str(r,"openid");}
     String oauth(String code){if(serviceId.isBlank()||serviceSecret.isBlank())throw error(503,"服务号尚未配置。");var r=get("https://api.weixin.qq.com/sns/oauth2/access_token?appid="+enc(serviceId)+"&secret="+enc(serviceSecret)+"&code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(400,"微信授权未完成，请重新生成绑定链接。");String openid=str(r,"openid");var follow=get("https://api.weixin.qq.com/cgi-bin/user/info?access_token="+enc(access(true))+"&openid="+enc(openid)+"&lang=zh_CN");if(integer(follow,"subscribe",0)!=1)throw error(400,"请先关注品牌服务号，再重新绑定。");return openid;}
     synchronized String access(boolean service){String k=service?"service":"mini";var c=cache.get(k);if(c!=null&&Instant.now().isBefore(c.expiry))return c.value;String id=service?serviceId:appId,sec=service?serviceSecret:secret;if(id.isBlank()||sec.isBlank())throw error(503,"微信应用密钥未配置，请检查服务器的 AppID 和 AppSecret。");var r=get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+enc(id)+"&secret="+enc(sec));String value=str(r,"access_token");if(value.isBlank())throw error(502,"微信 access_token 获取失败。"+failureReason(integer(r,"errcode",-1)));cache.put(k,new Access(value,Instant.now().plusSeconds(Math.max(60,integer(r,"expires_in",7200)-300))));return value;}

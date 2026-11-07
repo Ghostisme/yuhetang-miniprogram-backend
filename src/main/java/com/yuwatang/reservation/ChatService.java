@@ -11,6 +11,7 @@ import static com.yuwatang.reservation.Data.*;
 
 @Service
 class ChatService {
+    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(ChatService.class);
     final Data d;final CatalogService catalog;final WechatGateway wx;final TransactionTemplate tx;
     ChatService(Data d,CatalogService c,WechatGateway w,PlatformTransactionManager tm){this.d=d;catalog=c;wx=w;tx=new TransactionTemplate(tm);}
     void lock(){d.one("SELECT * FROM app_setting WHERE setting_key='chatLock' FOR UPDATE");}
@@ -57,14 +58,16 @@ class ChatService {
             boolean send="WECHAT".equals(c.get("channel"));long inboundSeq=send?((Number)d.one("SELECT COALESCE(MAX(seq),0) seq FROM chat_message WHERE conversation_id=? AND direction='IN'",cid).get("seq")).longValue():0;
             String mid=message(cid,"OUT","text",body,null,send?"SENDING":"SENT",a.name(),key);d.audit(a,str(c,"storeId"),"chat.reply",mid,"发送客户回复");return new Prepared(c,mid,send,inboundSeq);});
         if(p.send){
-            String state="UNKNOWN",reason="微信接口未明确返回发送结果，请先核实客户是否收到，避免重复发送。";boolean notAttempted=false;
+            String state="UNKNOWN",reason="微信返回结果缺少有效错误码，发送结果尚未确认。请先核实客户是否收到，避免重复发送。",category="INVALID_RESULT";boolean notAttempted=false;
             try{
                 var result=wx.sendCustomerText(str(p.c,"openid"),body);Object value=result==null?null:result.get("errcode");
                 if(value instanceof Number number&&number.doubleValue()==number.intValue()){
-                    int code=number.intValue();state=code==0?"SENT":"FAILED";reason=code==0?"":WechatGateway.failureReason(code);
+                    int code=number.intValue();state=code==0?"SENT":"FAILED";reason=code==0?"":WechatGateway.failureReason(code);category="ERRCODE_"+code;
                 }
-            }catch(WechatGateway.CustomerSendNotAttemptedException e){state="FAILED";reason=e.getMessage();notAttempted=true;}
-            catch(Exception e){/* A send may have reached WeChat. Keep UNKNOWN and never retry it automatically. */}
+            }catch(WechatGateway.CustomerSendNotAttemptedException e){state="FAILED";reason=e.getMessage();category="NOT_ATTEMPTED";notAttempted=true;}
+            catch(WechatGateway.ExchangeException e){reason=e.getReason()+"发送结果尚未确认。请先核实客户是否收到，避免重复发送。";category=e.category;}
+            catch(Exception e){reason="客服发送发生异常，发送结果尚未确认。请先核实客户是否收到，避免重复发送。";category="UNEXPECTED_"+e.getClass().getSimpleName();}
+            if(!state.equals("SENT"))log.warn("WeChat customer send message={} state={} category={}",p.messageId,state,category);
             String delivery=state,detail=reason;boolean restoreQuota=notAttempted;
             tx.executeWithoutResult(t->{
                 d.update("UPDATE chat_message SET delivery_status=?,error_message=? WHERE id=?",delivery,detail,p.messageId);
@@ -77,10 +80,10 @@ class ChatService {
         }
         return d.one("SELECT seq,id,direction,kind,content,delivery_status,error_message,sender_name,created_at FROM chat_message WHERE id=?",p.messageId);
     }
-    @Transactional public void receive(Map<String,Object> in){
+    @Transactional public String receive(Map<String,Object> in){
         String openid=text(in,"FromUserName",1,160),kind=str(in,"MsgType"),event=str(in,"Event");
-        if(!Set.of("text","image","miniprogrampage","event").contains(kind)||kind.equals("event")&&!event.equals("user_enter_tempsession"))return;
-        String eventId=!str(in,"MsgId").isBlank()?"wx:"+str(in,"MsgId"):"event:"+UUID.nameUUIDFromBytes(d.stringify(in).getBytes(StandardCharsets.UTF_8));if(eventId.length()>160)throw error(400,"消息标识过长。");lock();if(d.count("SELECT COUNT(*) FROM chat_receipt WHERE event_id=?",eventId)>0)return;d.update("INSERT INTO chat_receipt VALUES(?,?)",eventId,now());
+        if(!Set.of("text","image","miniprogrampage","event").contains(kind)||kind.equals("event")&&!event.equals("user_enter_tempsession"))return "IGNORED";
+        String eventId=!str(in,"MsgId").isBlank()?"wx:"+str(in,"MsgId"):"event:"+UUID.nameUUIDFromBytes(d.stringify(in).getBytes(StandardCharsets.UTF_8));if(eventId.length()>160)throw error(400,"消息标识过长。");lock();if(d.count("SELECT COUNT(*) FROM chat_receipt WHERE event_id=?",eventId)>0)return "DUPLICATE";d.update("INSERT INTO chat_receipt VALUES(?,?)",eventId,now());
         long time;try{time=Long.parseLong(str(in,"CreateTime"));}catch(Exception e){throw error(400,"消息时间不正确。");}long current=Instant.now().getEpochSecond();time=Math.min(time,current);
         Map<String,Object> c=null;var routes=d.rows("SELECT r.event_time,c.* FROM chat_route r JOIN chat_conversation c ON c.id=r.conversation_id WHERE r.openid=?",openid);String entry=str(in,"SessionFrom");
         if(kind.equals("event")&&!entry.isBlank()){
@@ -90,9 +93,10 @@ class ChatService {
         if(c==null&&!routes.isEmpty())c=routes.get(0);
         if(c==null){var last=d.rows("SELECT a.store_id FROM appointment a JOIN customer_identity u ON u.id=a.customer_id WHERE u.openid=? ORDER BY a.created_at DESC LIMIT 1",openid);c=conversation(openid,"WECHAT",last.isEmpty()?"":str(last.get(0),"storeId"));}
         String cid=str(c,"id");c=d.one("SELECT * FROM chat_conversation WHERE id=? FOR UPDATE",cid);if(routes.isEmpty())d.update("INSERT INTO chat_route VALUES(?,?,?)",openid,cid,time);else if(time>=((Number)routes.get(0).get("eventTime")).longValue())d.update("UPDATE chat_route SET conversation_id=?,event_time=? WHERE openid=?",cid,time,openid);
-        if(kind.equals("event")){long deadline=time+60;if(deadline>((Number)c.get("replyDeadline")).longValue())d.update("UPDATE chat_conversation SET reply_deadline=?,reply_remaining=2,updated_at=?,status='OPEN' WHERE id=?",deadline,now(),cid);return;}
+        if(kind.equals("event")){long deadline=time+60;if(deadline>((Number)c.get("replyDeadline")).longValue())d.update("UPDATE chat_conversation SET reply_deadline=?,reply_remaining=2,updated_at=?,status='OPEN' WHERE id=?",deadline,now(),cid);return "ENTRY";}
         String body=kind.equals("text")?str(in,"Content"):kind.equals("image")?"[客户图片]":"[小程序卡片] "+str(in,"Title");if(body.length()>16000)throw error(400,"消息内容过长。");message(cid,"IN",kind,body,kind.equals("image")?text(in,"MediaId",1,512):null,"RECEIVED","客户",null);
         if(time>=((Number)c.get("lastCustomerAt")).longValue())d.update("UPDATE chat_conversation SET last_customer_at=?,reply_deadline=?,reply_remaining=5 WHERE id=?",time,time+172800,cid);
+        return "STORED";
     }
     byte[] image(Admin a,String cid,String mid){scoped(a,cid);var m=d.one("SELECT media_id FROM chat_message WHERE id=? AND conversation_id=? AND kind='image'",mid,cid);return wx.customerImage(str(m,"mediaId"));}
 }

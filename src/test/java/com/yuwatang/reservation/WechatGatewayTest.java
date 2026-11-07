@@ -59,6 +59,31 @@ class WechatGatewayTest {
         token();server.expect(requestTo(sendUrl)).andRespond(request->{throw new ResourceAccessException("fixture interrupted");});
         assertThrows(ResponseStatusException.class,()->gateway.sendCustomerText("fixture-openid","您好"));server.verify();
     }
+    @Test void sendTimeoutPreservesItsCategoryWithoutLeakingTheTokenOrMessage(){
+        token();server.expect(requestTo(sendUrl)).andRespond(request->{throw new ResourceAccessException(sendUrl,new java.net.http.HttpTimeoutException("fixture-token private details"));});
+        var failure=assertThrows(WechatGateway.ExchangeException.class,()->gateway.sendCustomerText("fixture-openid","private customer text"));
+        assertEquals("READ_TIMEOUT",failure.category);assertTrue(failure.getReason().contains("响应超时"));
+        for(String secret:new String[]{"fixture-token","fixture-openid","private customer text","private details","access_token"})assertFalse(failure.toString().contains(secret));
+        server.verify();
+    }
+    @Test void sendHttpAndMalformedResponseFailuresRetainSafeActionableCategories(){
+        token();server.expect(requestTo(sendUrl)).andRespond(withStatus(org.springframework.http.HttpStatus.BAD_GATEWAY).body("private provider details"));
+        server.expect(requestTo(sendUrl)).andRespond(withSuccess("<html>private provider details</html>",MediaType.TEXT_PLAIN));
+        server.expect(requestTo(sendUrl)).andRespond(withSuccess("",MediaType.TEXT_PLAIN));
+        for(String expected:new String[]{"HTTP_502","INVALID_RESPONSE","EMPTY_RESPONSE"}){
+            var failure=assertThrows(WechatGateway.ExchangeException.class,()->gateway.sendCustomerText("fixture-openid","private customer text"));
+            assertEquals(expected,failure.category);assertFalse(failure.toString().contains("private"));assertFalse(failure.toString().contains("fixture-token"));
+        }
+        server.verify();
+    }
+    @Test void networkFailureCategoriesDistinguishDnsConnectionAndTls(){
+        var causes=java.util.List.of(new java.net.UnknownHostException("private hostname"),new java.net.ConnectException("private host"),new javax.net.ssl.SSLHandshakeException("private certificate"),new java.net.http.HttpConnectTimeoutException("private timeout"));
+        var categories=java.util.List.of("DNS_FAILURE","CONNECT_FAILURE","TLS_FAILURE","CONNECT_TIMEOUT");
+        for(int i=0;i<causes.size();i++){
+            var failure=WechatGateway.transportFailure(new ResourceAccessException("private URL",causes.get(i)));
+            assertEquals(categories.get(i),failure.category);assertFalse(failure.toString().contains("private"));
+        }
+    }
     @Test void emptyMalformedAndNonObjectResponsesAreNotReportedAsSuccess(){
         for(String body:new String[]{"","<html>unavailable</html>","[]","null"}){
             server.expect(requestTo("https://fixture.invalid/json")).andRespond(withSuccess(body,MediaType.TEXT_PLAIN));
