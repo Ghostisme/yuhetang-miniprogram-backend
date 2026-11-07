@@ -359,6 +359,63 @@ class StoreChatIntegrationTest {
         }finally{pool.shutdownNow();}
     }
 
+    @Test void tokenFailurePreservesReplyQuotaAndRecordsActionableFailureWithoutRetry()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());
+        when(wx.sendCustomerText(eq(openid),eq("凭证失败"))).thenThrow(new WechatGateway.CustomerSendNotAttemptedException("消息尚未提交微信：微信错误码 40164：请添加 IP 白名单。"));
+        var result=reply(cid,"凭证失败","token-failure-001");
+        assertEquals("FAILED",result.get("deliveryStatus"));assertTrue(str(result,"errorMessage").contains("40164"));
+        assertEquals(2,integer(conversation(cid),"replyRemaining",0));
+        assertEquals(result.get("id"),reply(cid,"凭证失败","token-failure-001").get("id"));
+        assertEquals(2,integer(conversation(cid),"replyRemaining",0));verify(wx,times(1)).sendCustomerText(openid,"凭证失败");
+    }
+
+    @Test void concurrentTokenFailuresRestoreBothReservedReplies()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());var barrier=new CyclicBarrier(2);
+        when(wx.sendCustomerText(eq(openid),startsWith("并发凭证失败"))).thenAnswer(invocation->{barrier.await(10,TimeUnit.SECONDS);throw new WechatGateway.CustomerSendNotAttemptedException("消息尚未提交微信：凭证不可用。");});
+        var pool=Executors.newFixedThreadPool(2);
+        try{
+            var first=pool.submit(()->reply(cid,"并发凭证失败1","token-concurrent-001"));
+            var second=pool.submit(()->reply(cid,"并发凭证失败2","token-concurrent-002"));
+            assertEquals("FAILED",first.get(15,TimeUnit.SECONDS).get("deliveryStatus"));
+            assertEquals("FAILED",second.get(15,TimeUnit.SECONDS).get("deliveryStatus"));
+            assertEquals(2,integer(conversation(cid),"replyRemaining",0));
+        }finally{pool.shutdownNow();}
+    }
+
+    @Test void tokenFailureDoesNotAddQuotaToARefreshedCustomerWindow()throws Exception{
+        long time=epoch();String cid=nativeEntry("yuyao",time);
+        nativeText("第一次消息",time,"quota-window-001");
+        when(wx.sendCustomerText(eq(openid),eq("凭证获取期间客户再发消息"))).thenAnswer(invocation->{
+            nativeText("同一秒再次发消息",time,"quota-window-002");
+            throw new WechatGateway.CustomerSendNotAttemptedException("消息尚未提交微信：凭证不可用。");
+        });
+        assertEquals("FAILED",reply(cid,"凭证获取期间客户再发消息","token-new-window-001").get("deliveryStatus"));
+        assertEquals(5,integer(conversation(cid),"replyRemaining",0));
+    }
+
+    @Test void missingOrInvalidSendResultRemainsUnknownWithoutRetry()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());nativeText("请回复",epoch(),"unknown-shape-001");
+        int index=0;
+        for(Map<String,Object> result:List.of(Map.<String,Object>of("errmsg","ok"),Map.<String,Object>of("errcode","0"),Map.<String,Object>of("errcode",0.5))){
+            String body="结果待核实"+index,key="missing-code-00"+index++;
+            when(wx.sendCustomerText(eq(openid),eq(body))).thenReturn(result);
+            assertEquals("UNKNOWN",reply(cid,body,key).get("deliveryStatus"));
+            assertEquals("UNKNOWN",reply(cid,body,key).get("deliveryStatus"));verify(wx,times(1)).sendCustomerText(openid,body);
+        }
+        assertEquals(2,integer(conversation(cid),"replyRemaining",0));
+    }
+
+    @Test void outOfRangeChatPageReturnsExistingConversationsAndTheCorrectPage()throws Exception{
+        String cid=web("yuyao");webSend(cid,"分页仍能找到客户",id());
+        var result=json(send(get("/api/admin/chats?page=99999"),manager,null),200);
+        assertEquals(1,integer(result,"page",0));assertEquals(1,integer(result,"total",0));assertEquals(cid,items(result).get(0).get("id"));
+        var all=json(send(get("/api/admin/chats"),hq,null),200);
+        assertEquals(1,integer(all,"unreadTotal",0));
+        json(send(patch("/api/admin/chats/"+cid+"/status"),manager,Map.of("status","RESOLVED")),200);
+        assertEquals(cid,items(json(send(get("/api/admin/chats"),manager,null),200)).get(0).get("id"));
+        assertEquals(0,integer(json(send(get("/api/admin/chats?status=OPEN"),manager,null),200),"total",-1));
+    }
+
     @Test void headquartersCanAssignUnroutedConversationsWithoutExposingOtherStores()throws Exception{
         String cid=web("");webSend(cid,"请协助选择门店",id());
         assertEquals(0,integer(json(send(get("/api/admin/chats"),manager,null),200),"total",-1));

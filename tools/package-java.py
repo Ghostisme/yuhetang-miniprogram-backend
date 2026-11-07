@@ -27,11 +27,12 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--release-id", default=dt.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    parser.add_argument("--build-dir", default="target-api", help="Verified API build directory, relative to the repository or absolute")
     arguments = parser.parse_args()
     release = arguments.release_id
     if not re.fullmatch(r"\d{8}-\d{6}", release):
         parser.error("release-id must be YYYYMMDD-HHMMSS")
-    build = ROOT / "target-api"
+    build = ROOT / arguments.build_dir
     jar = build / "reservation-api-1.0.0.jar"
     counts = dict.fromkeys(("tests", "failures", "errors", "skipped"), 0)
     reports = sorted((build / "surefire-reports").glob("TEST-*.xml"))
