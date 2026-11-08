@@ -90,7 +90,10 @@ class DianpingIntegrationTest {
         var profile=d.one("SELECT * FROM customer_profile WHERE id='existing'");var relation=d.one("SELECT * FROM store_customer WHERE customer_profile_id='existing'");int identities=d.count("SELECT COUNT(*) FROM customer_identity");
         var preview=upload("customers",List.of(customer("13900003501")),false,hq,200);assertTrue(bool(preview,"valid"));assertEquals(0,d.count("SELECT COUNT(*) FROM dianping_customer_link"));
         var first=upload("customers",List.of(customer("13900003501")),true,hq,200);assertEquals(1,integer(first,"created",0));
+        d.update("DELETE FROM customer_source WHERE customer_profile_id='existing'");
         var second=upload("customers",List.of(customer("13900003501")),true,hq,200);assertEquals(1,integer(second,"skipped",0));assertEquals(0,integer(second,"imported",-1));assertTrue(bool(second,"committed"));
+        assertEquals(List.of("DIANPING"),CustomerProfiles.sources(d,"existing"));
+        assertEquals(1,integer(request(get("/api/admin/customers?source=DIANPING&member=MEMBER"),hq,null,200),"total",0));
         assertEquals(profile,d.one("SELECT * FROM customer_profile WHERE id='existing'"));assertEquals(relation,d.one("SELECT * FROM store_customer WHERE customer_profile_id='existing'"));assertEquals(identities,d.count("SELECT COUNT(*) FROM customer_identity"));
         var changed=customer("13900003502");var invalid=upload("customers",List.of(changed),false,hq,200);assertFalse(bool(invalid,"valid"));upload("customers",List.of(changed),true,hq,400);assertEquals(1,d.count("SELECT COUNT(*) FROM customer_profile"));
     }

@@ -126,7 +126,11 @@ class DianpingService implements DianpingPort {
             List<String> resources=new ArrayList<>();for(var row:rows){resources.add("store:"+str(row,"storeId"));resources.add("phone:"+str(row,"phone"));}catalog.guard(resources);
             batch=id();String sourceName=Objects.toString(source.name(),"file");if(sourceName.length()>200)sourceName=sourceName.substring(sourceName.length()-200);
             d.update("INSERT INTO dianping_import_batch VALUES(?,?,?,?,?,?,?,?,?,?,?)",batch,kind.name(),sourceName,source.sha256(),input.size(),created,updated,skipped,actor.id(),actor.name(),now());
-            for(var row:rows){String operation=(String)row.remove("_action");row.remove("_row");if(operation.equals("SKIP"))continue;
+            for(var row:rows){String operation=(String)row.remove("_action");row.remove("_row");if(operation.equals("SKIP")){
+                    var existing=d.rows("SELECT id FROM customer_profile WHERE phone=?",str(row,"phone"));
+                    if(!existing.isEmpty())CustomerProfiles.source(d,str(existing.get(0),"id"),"DIANPING");
+                    continue;
+                }
                 String phone=str(row,"phone"),store=str(row,"storeId");
                 if(phone.matches("1[3-9]\\d{9}"))bookings.customerRelation(store,str(row,"name"),phone,"DIANPING");
                 if(kind==Kind.CUSTOMERS){String external=str(row,"externalCustomerId");if(!external.isEmpty()&&d.count("SELECT COUNT(*) FROM dianping_customer_link WHERE external_shop_id=? AND external_customer_id=?",row.get("externalShopId"),external)==0)d.update("INSERT INTO dianping_customer_link VALUES(?,?,?)",row.get("externalShopId"),external,d.one("SELECT id FROM customer_profile WHERE phone=?",phone).get("id"));}

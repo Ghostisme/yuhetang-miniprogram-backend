@@ -39,7 +39,7 @@ public class BookingService {
         if(!d.strings(p.get("serviceIds")).contains(service))throw error(400,"该调理师不在所选项目资料范围内。");
         return str(t,"name");
     }
-    void customerRelation(String store,String name,String phone,String source){var list=d.rows("SELECT * FROM customer_profile WHERE phone=?",phone);String pid;if(list.isEmpty()){pid=id();d.update("INSERT INTO customer_profile VALUES(?,?,?,?,?,?,?,?,?)",pid,phone,name,false,"",store,"",null,now());}else pid=str(list.get(0),"id");if(d.count("SELECT COUNT(*) FROM store_customer WHERE store_id=? AND customer_profile_id=?",store,pid)==0)d.update("INSERT INTO store_customer VALUES(?,?,?,?,?)",store,pid,"",source,null);}
+    void customerRelation(String store,String name,String phone,String source){var list=d.rows("SELECT * FROM customer_profile WHERE phone=?",phone);String pid;if(list.isEmpty()){pid=id();d.update("INSERT INTO customer_profile VALUES(?,?,?,?,?,?,?,?,?)",pid,phone,name,false,"",store,"",null,now());}else pid=str(list.get(0),"id");if(d.count("SELECT COUNT(*) FROM store_customer WHERE store_id=? AND customer_profile_id=?",store,pid)==0)d.update("INSERT INTO store_customer VALUES(?,?,?,?,?)",store,pid,"",source,null);CustomerProfiles.source(d,pid,source);}
     Map<String,Object> get(String id){return d.one("SELECT * FROM appointment WHERE id=?",id);}
     void history(String id,String status,String note,String operator){d.update("INSERT INTO appointment_history VALUES(?,?,?,?,?,?)",id(),id,status,note,operator,now());}
     @Transactional(isolation=Isolation.READ_COMMITTED) public Map<String,Object> change(String id,Map<String,Object> in,String customer,Admin actor){

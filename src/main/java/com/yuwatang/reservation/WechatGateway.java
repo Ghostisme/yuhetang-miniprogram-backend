@@ -67,6 +67,27 @@ public class WechatGateway {
     String login(String code){if(appId.isBlank()||secret.isBlank())throw error(503,"小程序登录尚未配置，请联系管理员完成微信账号接入。");var r=get("https://api.weixin.qq.com/sns/jscode2session?appid="+enc(appId)+"&secret="+enc(secret)+"&js_code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(401,"微信登录未完成，请重新进入小程序。");return str(r,"openid");}
     String oauth(String code){if(serviceId.isBlank()||serviceSecret.isBlank())throw error(503,"服务号尚未配置。");var r=get("https://api.weixin.qq.com/sns/oauth2/access_token?appid="+enc(serviceId)+"&secret="+enc(serviceSecret)+"&code="+enc(code)+"&grant_type=authorization_code");if(!r.containsKey("openid"))throw error(400,"微信授权未完成，请重新生成绑定链接。");String openid=str(r,"openid");var follow=get("https://api.weixin.qq.com/cgi-bin/user/info?access_token="+enc(access(true))+"&openid="+enc(openid)+"&lang=zh_CN");if(integer(follow,"subscribe",0)!=1)throw error(400,"请先关注品牌服务号，再重新绑定。");return openid;}
     synchronized String access(boolean service){String k=service?"service":"mini";var c=cache.get(k);if(c!=null&&Instant.now().isBefore(c.expiry))return c.value;String id=service?serviceId:appId,sec=service?serviceSecret:secret;if(id.isBlank()||sec.isBlank())throw error(503,"微信应用密钥未配置，请检查服务器的 AppID 和 AppSecret。");var r=get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+enc(id)+"&secret="+enc(sec));String value=str(r,"access_token");if(value.isBlank())throw error(502,"微信 access_token 获取失败。"+failureReason(integer(r,"errcode",-1)));cache.put(k,new Access(value,Instant.now().plusSeconds(Math.max(60,integer(r,"expires_in",7200)-300))));return value;}
+    String phoneNumber(String code){
+        var result=post("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token="+enc(access(false)),Map.of("code",code));
+        int errorCode=integer(result,"errcode",-1);
+        if(errorCode!=0){
+            if(Set.of(40001,40014,42001).contains(errorCode))invalidateAccess(false);
+            String reason=switch(errorCode){
+                case 40029 -> "手机号授权已过期或已使用，请重新点击微信手机号授权。";
+                case 45011 -> "微信手机号授权请求过于频繁，请稍后重试。";
+                case 48001 -> "小程序未开通手机号接口权限，请在微信后台检查认证与接口权限。";
+                case 40001,40014,42001 -> "微信凭证已失效，请重新点击手机号授权。";
+                default -> "微信未完成手机号授权，请检查小程序手机号接口权限、额度和配置。";
+            };
+            throw error(502,reason+"（微信错误码 "+errorCode+"）");
+        }
+        Object value=result.get("phone_info");
+        if(!(value instanceof Map<?,?> info))throw error(502,"微信未返回有效的手机号资料，请重新授权。");
+        String phone=Objects.toString(info.get("purePhoneNumber"),""),country=Objects.toString(info.get("countryCode"),"");
+        if(!country.equals("86")||!phone.matches("1[3-9]\\d{9}"))throw error(400,"当前预约联系仅支持中国大陆11位手机号，请选择对应号码。");
+        if(info.get("watermark") instanceof Map<?,?> watermark&&!appId.equals(Objects.toString(watermark.get("appid"),"")))throw error(502,"手机号授权与当前小程序不一致，请重新授权。");
+        return phone;
+    }
     synchronized void invalidateAccess(boolean service){cache.remove(service?"service":"mini");}
     List<Map<String,Object>> notificationTemplates(boolean service){
         String path=service?"cgi-bin/template/get_all_private_template":"wxaapi/newtmpl/gettemplate";

@@ -27,6 +27,26 @@ class WechatGatewayTest {
     void token(){server.expect(requestTo(tokenUrl)).andExpect(method(HttpMethod.GET))
         .andRespond(withSuccess("{\"access_token\":\"fixture-token\",\"expires_in\":7200}",MediaType.TEXT_PLAIN));}
 
+    @Test void phoneAuthorizationUsesTheCodeAndFixedLengthBodyWithMiniProgramCredentials(){
+        token();server.expect(requestTo("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=fixture-token"))
+            .andExpect(method(HttpMethod.POST)).andExpect(content().json("{\"code\":\"one-use-code\"}"))
+            .andExpect(header("Content-Length","23"))
+            .andRespond(withSuccess("{\"errcode\":0,\"phone_info\":{\"purePhoneNumber\":\"13900003001\",\"countryCode\":\"86\",\"watermark\":{\"appid\":\"fixture-app\"}}}",MediaType.TEXT_PLAIN));
+        assertEquals("13900003001",gateway.phoneNumber("one-use-code"));server.verify();
+    }
+    @Test void phoneAuthorizationReportsPermissionFailureWithoutEchoingSecretsOrProviderBody(){
+        token();server.expect(requestTo("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=fixture-token"))
+            .andRespond(withSuccess("{\"errcode\":48001,\"errmsg\":\"fixture-token private diagnostics\"}",MediaType.APPLICATION_JSON));
+        var failure=assertThrows(ResponseStatusException.class,()->gateway.phoneNumber("one-use-code"));
+        assertTrue(failure.getReason().contains("48001"));assertTrue(failure.getReason().contains("手机号接口权限"));
+        assertFalse(failure.getReason().contains("fixture-token"));assertFalse(failure.getReason().contains("private diagnostics"));server.verify();
+    }
+    @Test void phoneAuthorizationRejectsAnotherAppsWatermark(){
+        token();server.expect(requestTo("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=fixture-token"))
+            .andRespond(withSuccess("{\"errcode\":0,\"phone_info\":{\"purePhoneNumber\":\"13900003001\",\"countryCode\":\"86\",\"watermark\":{\"appid\":\"another-app\"}}}",MediaType.APPLICATION_JSON));
+        assertThrows(ResponseStatusException.class,()->gateway.phoneNumber("one-use-code"));server.verify();
+    }
+
     @Test void acceptsPlainTextJsonForBothTokenAndCustomerSendAndCachesToken(){
         token();
         for(int i=0;i<2;i++)server.expect(requestTo(sendUrl)).andExpect(method(HttpMethod.POST))
