@@ -57,6 +57,8 @@ def main():
         assert application[:4] == b"\xca\xfe\xba\xbe" and int.from_bytes(application[6:8], "big") == 61
         migrations = [name for name in names if re.fullmatch(r"BOOT-INF/classes/db/migration/V\d+__.+\.sql", name)]
         assert len(migrations) >= 6
+        java_migrations = [name for name in names if re.fullmatch(r"BOOT-INF/classes/db/migration/V\d+__.+\.class", name)]
+        assert "BOOT-INF/classes/db/migration/V8__chat_reception_lifecycle.class" in java_migrations
         assert any(re.fullmatch(r"BOOT-INF/lib/mariadb-java-client-.+\.jar", name) for name in names)
         media = ROOT / "src/main/resources/static/media"
         for source in media.rglob("*"):
@@ -83,7 +85,8 @@ def main():
         "deployment": "Java-only Docker application, existing MySQL and gateway managed separately",
         "java": 17, "backendTests": counts,
         "productionBootstrapTests": [case.attrib["name"] for case in production.findall("testcase")],
-        "migrationFiles": len(migrations), "backendJarSha256": sha(jar),
+        "migrationFiles": len(migrations) + len(java_migrations),
+        "javaMigrations": java_migrations, "backendJarSha256": sha(jar),
         "frontendIncluded": False, "openrestyIncluded": False, "nginxIncluded": False,
         "databaseInstallerIncluded": False, "databaseDataIncluded": False,
         "tlsPrivateKeyIncluded": False, "realCredentialsIncluded": False,

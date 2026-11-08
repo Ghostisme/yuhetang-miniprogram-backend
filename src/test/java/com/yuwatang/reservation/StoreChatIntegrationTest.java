@@ -120,7 +120,8 @@ class StoreChatIntegrationTest {
     String web(String store)throws Exception{return str(json(send(post("/api/me/chats"),customerToken,Map.of("storeId",store)),200),"id");}
     Map<String,Object> message(String text,String key){return Map.of("content",text,"clientKey",key);}
     Map<String,Object> webSend(String cid,String text,String key)throws Exception{return json(send(post("/api/me/chats/"+cid+"/messages"),customerToken,message(text,key)),200);}
-    Map<String,Object> reply(String cid,String text,String key)throws Exception{return json(send(post("/api/admin/chats/"+cid+"/messages"),manager,message(text,key)),200);}
+    void accept(String cid)throws Exception{json(send(post("/api/admin/chats/"+cid+"/accept"),manager,null),200);}
+    Map<String,Object> reply(String cid,String text,String key)throws Exception{if("OPEN".equals(conversation(cid).get("status")))accept(cid);return json(send(post("/api/admin/chats/"+cid+"/messages"),manager,message(text,key)),200);}
     Map<String,Object> conversation(String cid){return d.one("SELECT * FROM chat_conversation WHERE id=?",cid);}
     long epoch(){return Instant.now().getEpochSecond();}
     Map<String,Object> inbound(String type,long time){return new LinkedHashMap<>(Map.of("ToUserName","mini-program","FromUserName",openid,"CreateTime",time,"MsgType",type));}
@@ -246,6 +247,7 @@ class StoreChatIntegrationTest {
             json(send(put("/api/admin/stores/yuyao/services"),token,Map.of("items",List.of(project("不应批量保存")))),403);
             json(send(post("/api/admin/chats/"+cid+"/messages"),token,message("不应发出",id())),403);
             json(send(patch("/api/admin/chats/"+cid+"/status"),token,Map.of("status","RESOLVED")),403);
+            for(String action:List.of("accept","end","release"))response(send(post("/api/admin/chats/"+cid+"/"+action),token,null),403);
         }finally{for(String p:List.of("services:write","chat:reply"))d.update("INSERT INTO role_permission VALUES('frontdesk',?)",p);}
     }
 
@@ -265,7 +267,10 @@ class StoreChatIntegrationTest {
         json(send(patch("/api/admin/chats/"+cid+"/read"),manager,Map.of("throughSeq",first.get("seq"))),200);
         assertEquals(0,integer(json(send(get("/api/admin/chats"),manager,null),200),"unreadTotal",-1));
         json(send(patch("/api/admin/chats/"+cid+"/status"),manager,Map.of("status","RESOLVED")),200);
-        webSend(cid,"我还有一个问题","web-request-002");assertEquals("OPEN",conversation(cid).get("status"));
+        response(send(post("/api/me/chats/"+cid+"/messages"),customerToken,message("我还有一个问题","web-request-002")),409);
+        assertEquals(cid,web("yuyao"));
+        String next=str(json(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),200),"id");assertNotEquals(cid,next);
+        webSend(next,"我还有一个问题","web-request-002");assertEquals("OPEN",conversation(next).get("status"));assertEquals("RESOLVED",conversation(cid).get("status"));
         assertEquals(1,integer(json(send(get("/api/admin/chats"),manager,null),200),"unreadTotal",0));
         verify(wx,never()).sendCustomerText(anyString(),anyString());
     }
@@ -400,6 +405,7 @@ class StoreChatIntegrationTest {
         json(send(post("/api/admin/chats/"+first+"/messages"),manager,message("旧门店不应发送",id())),409);
         var active=json(send(get("/api/admin/chats/"+first+"/messages"),manager,null),200);
         assertEquals(false,d.object(d.stringify(active.get("conversation"))).get("activeRoute"));
+        json(send(post("/api/admin/chats/"+next+"/accept"),otherStore,null),200);
         assertEquals("SENT",json(send(post("/api/admin/chats/"+next+"/messages"),otherStore,message("百乐门接待您",id())),200).get("deliveryStatus"));
         assertEquals(1,d.count("SELECT COUNT(*) FROM chat_message WHERE conversation_id=? AND direction='IN'",next));
     }
@@ -446,7 +452,7 @@ class StoreChatIntegrationTest {
     }
 
     @Test void concurrentRepliesCannotOverspendTheWechatQuota()throws Exception{
-        String cid=nativeEntry("yuyao",epoch());d.update("UPDATE chat_conversation SET reply_remaining=1 WHERE id=?",cid);
+        String cid=nativeEntry("yuyao",epoch());accept(cid);d.update("UPDATE chat_conversation SET reply_remaining=1 WHERE id=?",cid);
         var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var start=new CountDownLatch(1);
         try{
             List<Future<Integer>> requests=new ArrayList<>();
@@ -509,7 +515,7 @@ class StoreChatIntegrationTest {
         assertEquals(1,integer(result,"page",0));assertEquals(1,integer(result,"total",0));assertEquals(cid,items(result).get(0).get("id"));
         var all=json(send(get("/api/admin/chats"),hq,null),200);
         assertEquals(1,integer(all,"unreadTotal",0));
-        json(send(patch("/api/admin/chats/"+cid+"/status"),manager,Map.of("status","RESOLVED")),200);
+        accept(cid);json(send(patch("/api/admin/chats/"+cid+"/status"),manager,Map.of("status","RESOLVED")),200);
         assertEquals(cid,items(json(send(get("/api/admin/chats"),manager,null),200)).get(0).get("id"));
         assertEquals(0,integer(json(send(get("/api/admin/chats?status=OPEN"),manager,null),200),"total",-1));
     }
@@ -523,6 +529,114 @@ class StoreChatIntegrationTest {
         response(send(get("/api/admin/chats/"+cid+"/messages"),otherStore,null),404);
         json(send(patch("/api/admin/chats/"+cid+"/route"),hq,Map.of("storeId","bai-le-men")),409);
         reply(cid,"余姚店已接待",id());assertEquals(2,items(json(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),200)).size());
+    }
+
+    @Test void onlyTheAssignedAgentMayReplyOrEndAndCustomerMessagesKeepOwnership()throws Exception{
+        String cid=web("yuyao");webSend(cid,"需要人工接待",id());
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("未接入回复",id())),409);
+        response(send(post("/api/admin/chats/"+cid+"/end"),manager,null),409);
+        response(send(post("/api/admin/chats/"+cid+"/accept"),otherStore,null),404);
+        var accepted=json(send(post("/api/admin/chats/"+cid+"/accept"),manager,null),200);
+        assertEquals("ACTIVE",accepted.get("status"));assertEquals("yuyao-manager",accepted.get("assignedAdminId"));assertEquals(true,accepted.get("canReply"));
+        assertEquals(accepted.get("acceptedAt"),json(send(post("/api/admin/chats/"+cid+"/accept"),manager,null),200).get("acceptedAt"));
+        webSend(cid,"补充咨询内容",id());assertEquals("ACTIVE",conversation(cid).get("status"));
+        for(String action:List.of("accept","end","release"))response(send(post("/api/admin/chats/"+cid+"/"+action),adminToken("yuyao-frontdesk"),null),409);
+        response(send(post("/api/admin/chats/"+cid+"/messages"),hq,message("总部不能抢答",id())),409);
+        var viewer=d.object(json(send(get("/api/admin/chats/"+cid+"/messages"),hq,null),200).get("conversation"));
+        assertEquals(false,viewer.get("canReply"));assertEquals(false,viewer.get("canAccept"));assertEquals(true,viewer.get("canRelease"));
+        assertFalse(d.stringify(json(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),200)).contains("assignedAdminId"));
+        json(send(post("/api/admin/chats/"+cid+"/release"),hq,null),200);
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("退回后旧人不能回",id())),409);
+        json(send(post("/api/admin/chats/"+cid+"/accept"),adminToken("yuyao-frontdesk"),null),200);
+        assertEquals("yuyao-frontdesk",conversation(cid).get("assignedAdminId"));
+    }
+
+    @Test void endedConversationStaysReadOnlyAndNewConsultationHasANewIdentity()throws Exception{
+        String cid=web("yuyao");var first=webSend(cid,"第一次咨询",id());accept(cid);
+        var end=json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        assertEquals("RESOLVED",end.get("status"));assertEquals(false,end.get("canAccept"));assertEquals(false,end.get("canReply"));
+        assertEquals(end.get("endedAt"),json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200).get("endedAt"));
+        assertEquals(0,integer(json(send(get("/api/admin/chats/unread"),manager,null),200),"unreadTotal",-1));
+        response(send(post("/api/admin/chats/"+cid+"/accept"),manager,null),409);
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("已结束不能回复",id())),409);
+        response(send(patch("/api/admin/chats/"+cid+"/status"),manager,Map.of("status","OPEN")),409);
+        response(send(post("/api/me/chats/"+cid+"/messages"),customerToken,message("旧页面不能重开",id())),409);
+        response(send(post("/api/me/chats/"+cid+"/restart"),otherCustomerToken,null),404);
+        assertEquals(cid,web("yuyao"));
+        String next=str(json(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),200),"id");
+        assertNotEquals(cid,next);assertEquals(next,str(json(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),200),"id"));
+        assertEquals(next,web("yuyao"));assertEquals("",str(conversation(next),"assignedAdminId"));
+        assertEquals(first.get("id"),items(json(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),200)).get(0).get("id"));
+        assertTrue(items(json(send(get("/api/me/chats/"+next+"/messages"),customerToken,null),200)).isEmpty());
+        assertEquals(1,integer(json(send(get("/api/admin/chats?status=OPEN"),manager,null),200),"total",0));
+        assertEquals(1,integer(json(send(get("/api/admin/chats?status=RESOLVED"),manager,null),200),"total",0));
+    }
+
+    @Test void simultaneousAgentAcceptsHaveExactlyOneWinner()throws Exception{
+        String cid=web("yuyao");var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var go=new CountDownLatch(1);
+        try{
+            List<Future<Integer>> calls=new ArrayList<>();for(String token:List.of(manager,adminToken("yuyao-frontdesk")))calls.add(pool.submit(()->{ready.countDown();go.await(5,TimeUnit.SECONDS);return send(post("/api/admin/chats/"+cid+"/accept"),token,null).andReturn().getResponse().getStatus();}));
+            assertTrue(ready.await(5,TimeUnit.SECONDS));go.countDown();var codes=new ArrayList<>(List.of(calls.get(0).get(15,TimeUnit.SECONDS),calls.get(1).get(15,TimeUnit.SECONDS)));Collections.sort(codes);assertEquals(List.of(200,409),codes);
+            assertEquals(1,d.count("SELECT COUNT(*) FROM audit_log WHERE target_id=? AND action='chat.accept'",cid));
+            assertEquals("ACTIVE",conversation(cid).get("status"));
+        }finally{pool.shutdownNow();}
+    }
+
+    @Test void simultaneousNewConsultationRequestsCannotDuplicateTheLiveSession()throws Exception{
+        String cid=web("yuyao");accept(cid);json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        var pool=Executors.newFixedThreadPool(2);try{
+            var first=pool.submit(()->json(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),200));
+            var second=pool.submit(()->json(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),200));
+            assertEquals(first.get(15,TimeUnit.SECONDS).get("id"),second.get(15,TimeUnit.SECONDS).get("id"));
+            assertEquals(1,d.count("SELECT COUNT(*) FROM chat_conversation WHERE openid=? AND active_key='LIVE'",openid));
+        }finally{pool.shutdownNow();}
+    }
+
+    @Test void nativeEntryCannotResumeEndedHistoryButANewTextQueuesANewConversation()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());nativeText("本次问题",epoch(),"native-before-end");reply(cid,"已处理",id());
+        assertEquals("ACTIVE",conversation(cid).get("status"));json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        directNativeEntry("yht-store:yuyao",epoch());assertEquals("RESOLVED",conversation(cid).get("status"));assertEquals(1,d.count("SELECT COUNT(*) FROM chat_conversation"));
+        nativeText("这是新的问题",epoch(),"native-after-end");String next=str(d.one("SELECT conversation_id FROM chat_route WHERE openid=?",openid),"conversationId");
+        assertNotEquals(cid,next);assertEquals("OPEN",conversation(next).get("status"));assertEquals("",str(conversation(next),"assignedAdminId"));
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("旧接待不能继续发",id())),409);
+        response(send(post("/api/admin/chats/"+next+"/messages"),manager,message("新会话先接入",id())),409);
+        assertEquals("SENT",reply(next,"新咨询已接待",id()).get("deliveryStatus"));
+        verify(wx,times(2)).sendCustomerText(eq(openid),anyString());
+    }
+
+    @Test void delayedOldNativeTextIsPreservedWithoutReopeningOrCreatingUnread()throws Exception{
+        String cid=nativeEntry("yuyao",epoch()-60);accept(cid);json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        nativeText("延迟到达的旧消息",epoch()-20,"late-native-before-end");
+        assertEquals("RESOLVED",conversation(cid).get("status"));assertEquals(1,d.count("SELECT COUNT(*) FROM chat_conversation"));
+        assertEquals(1,items(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200)).size());
+        assertEquals(0,integer(json(send(get("/api/admin/chats/unread"),manager,null),200),"unreadTotal",-1));
+        verify(wx,never()).sendCustomerText(anyString(),anyString());
+    }
+
+    @Test void sendingWechatReplyCannotBeEndedOrHandedOffMidFlight()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());accept(cid);var entered=new CountDownLatch(1);var finish=new CountDownLatch(1);
+        when(wx.sendCustomerText(anyString(),anyString())).thenAnswer(i->{entered.countDown();assertTrue(finish.await(10,TimeUnit.SECONDS));return Map.of("errcode",0);});
+        var pool=Executors.newSingleThreadExecutor();try{
+            var sending=pool.submit(()->reply(cid,"正在发送的回复",id()));assertTrue(entered.await(5,TimeUnit.SECONDS));
+            for(String action:List.of("end","release"))response(send(post("/api/admin/chats/"+cid+"/"+action),manager,null),409);
+            finish.countDown();assertEquals("SENT",sending.get(10,TimeUnit.SECONDS).get("deliveryStatus"));
+            json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        }finally{finish.countDown();pool.shutdownNow();}
+    }
+
+    @Test void lifecycleMigrationPreservesHistoryAndEnforcesOneLiveConversation()throws Exception{
+        String url="jdbc:h2:mem:yht_chat_upgrade_"+id()+";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+        org.flywaydb.core.Flyway.configure().dataSource(url,"sa","").target("7").load().migrate();
+        try(var connection=java.sql.DriverManager.getConnection(url,"sa","");var sql=connection.createStatement()){
+            sql.execute("INSERT INTO chat_conversation(id,openid,channel,store_id,display_name,status,last_preview,created_at,updated_at) VALUES('old-ended','wx-old','WEB','yuyao','原客户','RESOLVED','原内容','2026-11-01T10:00:00+08:00','2026-11-01T10:02:00+08:00')");
+            sql.execute("INSERT INTO chat_message(id,conversation_id,direction,kind,content,delivery_status,sender_name,created_at) VALUES('old-message','old-ended','IN','text','原消息','RECEIVED','客户','2026-11-01T10:00:00+08:00')");
+        }
+        org.flywaydb.core.Flyway.configure().dataSource(url,"sa","").load().migrate();
+        try(var connection=java.sql.DriverManager.getConnection(url,"sa","");var sql=connection.createStatement()){
+            try(var r=sql.executeQuery("SELECT c.status,c.active_key,c.ended_at,m.content FROM chat_conversation c JOIN chat_message m ON m.conversation_id=c.id WHERE c.id='old-ended'")){assertTrue(r.next());assertEquals("RESOLVED",r.getString(1));assertNull(r.getString(2));assertEquals("2026-11-01T10:02:00+08:00",r.getString(3));assertEquals("原消息",r.getString(4));}
+            String insert="INSERT INTO chat_conversation(id,openid,channel,store_id,display_name,status,last_preview,created_at,updated_at) VALUES('%s','wx-old','WEB','yuyao','原客户','OPEN','','2026-11-02','2026-11-02')";
+            sql.execute(insert.formatted("new-live"));assertThrows(java.sql.SQLException.class,()->sql.execute(insert.formatted("duplicate-live")));
+        }
     }
 
     @Test void upgradingAnExistingDatabasePreservesStoreDataAndGrantsBuiltInRoles()throws Exception{
