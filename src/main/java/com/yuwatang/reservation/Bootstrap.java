@@ -54,7 +54,7 @@ class Bootstrap implements CommandLineRunner {
         }
         // Production starts with a valid editor configuration, without example business content.
         Map<String,Object> site=new LinkedHashMap<>();
-        site.put("brandName","裕和堂");site.put("brandEnglish","YU HE TANG");
+        site.put("brandName","裕和堂");site.put("brandEnglish","YU Health");
         site.put("tagline","");site.put("theme","sage");site.put("brandStory","");
         site.put("hero",Map.of("eyebrow","","title","","subtitle","","image","","button",""));
         site.put("contact",Map.of("phone","","wechat","","message",""));

@@ -91,7 +91,7 @@ def main():
         api = start("bootstrap")
         stop()
         data = importer.load_dataset(importer.DEFAULT_DATASET)
-        empty = dict(brandName="裕和堂", brandEnglish="YU HE TANG", tagline="", brandStory="", theme="sage",
+        empty = dict(brandName="裕和堂", brandEnglish="YU Health", tagline="", brandStory="", theme="sage",
                      hero={k: "" for k in data["content"]["hero"]}, contact={k: "" for k in data["content"]["contact"]},
                      sections=[], services=[], products=[], galleryGroups=[], assetLibrary=[], customerServiceEnabled=True, version=1)
         literal = json.dumps(empty, ensure_ascii=False).replace("'", "''")

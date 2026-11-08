@@ -20,7 +20,7 @@ class FakeApi:
 
     def __init__(self, data):
         self.data = data
-        self.draft = dict(brandName="裕和堂", brandEnglish="YU HE TANG", tagline="", brandStory="", theme="sage",
+        self.draft = dict(brandName="裕和堂", brandEnglish="YU Health", tagline="", brandStory="", theme="sage",
                           hero={k: "" for k in data["content"]["hero"]}, contact={k: "" for k in data["content"]["contact"]},
                           sections=[], services=[], products=[], galleryGroups=[], customerServiceEnabled=True, version=1)
         self.published = copy.deepcopy(self.draft)
