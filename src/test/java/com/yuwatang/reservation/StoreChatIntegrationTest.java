@@ -79,6 +79,39 @@ class StoreChatIntegrationTest {
     @SuppressWarnings("unchecked") List<Map<String,Object>> items(Map<String,Object> result){return (List<Map<String,Object>>)result.get("items");}
     Map<String,Object> project(String name){return new LinkedHashMap<>(Map.of("name",name,"duration","45分钟","description","门店独立养护介绍","enabled",true,"image","/media/ritual.webp","steps",List.of("沟通","养护"),"sortOrder",1));}
     Map<String,Object> createProject()throws Exception{return json(send(post("/api/admin/stores/yuyao/services"),manager,project("余姚专属项目")),200);}
+    @Test void independentStoreCatalogsKeepOwnRecordsAndIgnoreFutureBrandChanges()throws Exception{
+        var left=json(send(post("/api/admin/stores/yuyao/services"),hq,project("中医推拿")),200);
+        var right=json(send(post("/api/admin/stores/bai-le-men/services"),hq,project("中医推拿")),200);
+        assertNotEquals(left.get("id"),right.get("id"));
+        for(String storeId:List.of("yuyao","bai-le-men")){
+            var p=d.object(catalog.store(storeId).get("profileJson"));p.put("catalogMode","INDEPENDENT");
+            json(send(put("/api/admin/stores/"+storeId),hq,p),200);
+        }
+        assertEquals(List.of(left.get("id")),catalog.storeServices("yuyao",true).stream().map(s->s.get("id")).toList());
+        var updated=new LinkedHashMap<>(left);updated.put("description","余姚高级228元");
+        json(send(put("/api/admin/stores/yuyao/services/"+left.get("id")),manager,updated),200);
+        assertEquals("门店独立养护介绍",catalog.storeServices("bai-le-men",true).get(0).get("description"));
+        var site=d.object(published);var services=new ArrayList<>(catalog.collection(site,"services"));
+        services.forEach(s->s.put("enabled",false));services.add(new LinkedHashMap<>(Map.of("id","new-hq-only","name","总部新模板","enabled",true)));
+        site.put("services",services);d.update("UPDATE site_config SET published_json=? WHERE id='brand'",d.stringify(site));catalog.invalidateSite();
+        assertEquals(List.of(left.get("id")),catalog.storeServices("yuyao",true).stream().map(s->s.get("id")).toList());
+        assertEquals(List.of(right.get("id")),catalog.storeServices("bai-le-men",true).stream().map(s->s.get("id")).toList());
+        assertTrue(catalog.storeServices("huashan",true).stream().anyMatch(s->"new-hq-only".equals(s.get("id"))));
+        for(String field:List.of("appId","secret","customerTemplate","customerReminderTemplate"))org.springframework.test.util.ReflectionTestUtils.setField(wx,field,"");
+        assertEquals(true,json(send(get("/api/runtime"),null,null),200).get("independentStoreServices"));
+        response(send(post("/api/appointments").header("Idempotency-Key",id()),customerToken,booking("yuyao",str(right,"id"),"14:00")),400);
+    }
+    @Test void onlyHeadquartersChangesCatalogModeAndOmittedModeIsPreserved()throws Exception{
+        var p=d.object(catalog.store("yuyao").get("profileJson"));p.put("catalogMode","INDEPENDENT");
+        json(send(put("/api/admin/stores/yuyao"),manager,p),200);
+        assertEquals("INHERIT",d.object(catalog.store("yuyao").get("profileJson")).get("catalogMode"));
+        json(send(put("/api/admin/stores/yuyao"),hq,p),200);
+        p.remove("catalogMode");json(send(put("/api/admin/stores/yuyao"),manager,p),200);
+        assertEquals("INDEPENDENT",d.object(catalog.store("yuyao").get("profileJson")).get("catalogMode"));
+        json(send(put("/api/admin/stores/yuyao"),hq,p),200);
+        assertEquals("INDEPENDENT",d.object(catalog.store("yuyao").get("profileJson")).get("catalogMode"));
+        p.put("catalogMode","invalid");response(send(put("/api/admin/stores/yuyao"),hq,p),400);
+    }
     Map<String,Object> booking(String store,String service,String time){return new LinkedHashMap<>(Map.ofEntries(
         Map.entry("storeId",store),Map.entry("serviceId",service),Map.entry("date",LocalDate.now(ZONE).plusDays(1).toString()),
         Map.entry("startTime",time),Map.entry("headcount",1),Map.entry("name","品项测试客户"),Map.entry("phone","13900009001"),

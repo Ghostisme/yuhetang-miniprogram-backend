@@ -1,0 +1,3309 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "client-services-20261108",
+  "sourcePolicy": "branch-menu-images-first; pdf-only-items-disabled",
+  "sourcePdf": {
+    "filename": "Yu Health - Services and Price Guide.pdf",
+    "sha256": "221c9a32518affe219f2734d926e470b0c2360f14d0bef404561403f0c6dfa2f",
+    "statedValidAsOf": "2026-09"
+  },
+  "notes": [
+    "价格按各店中文价目图片逐项核对；套餐采用红色活动价，不导入划线原价。",
+    "中文图未列出、仅PDF提及的9条门店项目默认不上架，待品牌确认。",
+    "高级/特级/专家为项目价格档位，不改变现有调理师等级。",
+    "每项计费项目不推算服务分钟数。拔罐与刮痧分为两个可选品项，均保留每项价格；扦/刮/捏脚保留组合名称并注明每项计费。",
+    "项目封面复用当前已授权素材；9张价目图作为独立素材归档，不裁成项目写真。",
+    "每个门店独立建档，拥有各自的品项ID、价格、时长和上下架状态；品项定义用于整理资料，不写入总部品牌品项。",
+    "本包不更新门店地址、营业时间、会员折扣、预约规则或账号。"
+  ],
+  "services": [
+    {
+      "id": "yuht-symptom-care",
+      "name": "对症调理",
+      "english": "Symptom-Specific Care",
+      "category": "特色调理",
+      "duration": "60分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "特色调理 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 10,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "massage",
+      "name": "中医推拿",
+      "english": "TCM Massage",
+      "category": "推拿养护",
+      "duration": "60分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "推拿养护 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 20,
+      "enabled": true,
+      "aliases": [
+        "经络舒缓"
+      ]
+    },
+    {
+      "id": "moxa",
+      "name": "扶阳悬灸",
+      "english": "Moxibustion",
+      "category": "艾灸温养",
+      "duration": "60分钟",
+      "image": "/media/moxa.webp",
+      "subtitle": "艾灸温养 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 30,
+      "enabled": true,
+      "aliases": [
+        "蕲艾温养"
+      ]
+    },
+    {
+      "id": "yuht-spa",
+      "name": "高端精油SPA",
+      "english": "Essential Oil SPA",
+      "category": "精油养护",
+      "duration": "60分钟",
+      "image": "/media/ritual.webp",
+      "subtitle": "精油养护 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 40,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "foot",
+      "name": "香薰足疗",
+      "english": "Foot Massage",
+      "category": "足部养护",
+      "duration": "60分钟",
+      "image": "/media/foot.webp",
+      "subtitle": "足部养护 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 50,
+      "enabled": true,
+      "aliases": [
+        "足下轻盈"
+      ]
+    },
+    {
+      "id": "yuht-specific-care",
+      "name": "专项调理",
+      "english": "Specific Conditioning",
+      "category": "特色调理",
+      "duration": "60分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "特色调理 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 60,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-facial-care",
+      "name": "容颜调理",
+      "english": "Facial Care & Therapy",
+      "category": "容颜养护",
+      "duration": "60分钟",
+      "image": "/media/ritual.webp",
+      "subtitle": "容颜养护 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 70,
+      "enabled": true,
+      "aliases": [
+        "容颜内调",
+        "面部容颜"
+      ]
+    },
+    {
+      "id": "yuht-cupping",
+      "name": "拔罐",
+      "english": "Cupping",
+      "category": "传统养护",
+      "duration": "每项",
+      "image": "/media/guasha.webp",
+      "subtitle": "传统养护 · 每项",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 80,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "guasha",
+      "name": "刮痧",
+      "english": "Skin Scraping",
+      "category": "传统养护",
+      "duration": "每项",
+      "image": "/media/guasha.webp",
+      "subtitle": "传统养护 · 每项",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 90,
+      "enabled": true,
+      "aliases": [
+        "东方刮痧"
+      ]
+    },
+    {
+      "id": "yuht-pedicure",
+      "name": "扦／刮／捏脚",
+      "english": "Pedicure",
+      "category": "足部养护",
+      "duration": "每项",
+      "image": "/media/foot.webp",
+      "subtitle": "足部养护 · 每项",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 100,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-ear-picking",
+      "name": "古法采耳",
+      "english": "Ear Picking",
+      "category": "采耳养护",
+      "duration": "30分钟",
+      "image": "/media/ritual.webp",
+      "subtitle": "采耳养护 · 30分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 110,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-visceral-care",
+      "name": "脏腑调理",
+      "english": "Visceral Conditioning",
+      "category": "特色调理",
+      "duration": "60分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "特色调理 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 120,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-meridian-care",
+      "name": "经络疏通",
+      "english": "Meridian Dredging",
+      "category": "特色调理",
+      "duration": "60分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "特色调理 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 130,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-ear-head",
+      "name": "采洗耳头部按摩",
+      "english": "Ear Cleaning & Head Massage",
+      "category": "采耳养护",
+      "duration": "60分钟",
+      "image": "/media/ritual.webp",
+      "subtitle": "采耳养护 · 60分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 140,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-premium-foot",
+      "name": "大桶火龙",
+      "english": "Premium Foot Massage",
+      "category": "足部养护",
+      "duration": "80分钟",
+      "image": "/media/foot.webp",
+      "subtitle": "足部养护 · 80分钟",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 150,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-pediatric-tuina",
+      "name": "小儿推拿",
+      "english": "Pediatric Tuina",
+      "category": "推拿养护",
+      "duration": "时长待门店确认",
+      "image": "/media/massage.webp",
+      "subtitle": "推拿养护 · 时长待门店确认",
+      "tag": "门店品项",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 160,
+      "enabled": false,
+      "aliases": []
+    },
+    {
+      "id": "yuht-package-a",
+      "name": "A套餐·精油SPA＋扶阳悬灸",
+      "english": "Package A",
+      "category": "组合套餐",
+      "duration": "120分钟",
+      "image": "/media/moxa.webp",
+      "subtitle": "组合套餐 · 120分钟",
+      "tag": "组合套餐",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 170,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-package-b",
+      "name": "B套餐·中医推拿＋扶阳悬灸",
+      "english": "Package B",
+      "category": "组合套餐",
+      "duration": "120分钟",
+      "image": "/media/massage.webp",
+      "subtitle": "组合套餐 · 120分钟",
+      "tag": "组合套餐",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 180,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-package-c",
+      "name": "C套餐·香薰足疗＋精油SPA",
+      "english": "Package C",
+      "category": "组合套餐",
+      "duration": "120分钟",
+      "image": "/media/foot.webp",
+      "subtitle": "组合套餐 · 120分钟",
+      "tag": "组合套餐",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 190,
+      "enabled": true,
+      "aliases": []
+    },
+    {
+      "id": "yuht-package-d",
+      "name": "D套餐·香薰足疗＋中医推拿",
+      "english": "Package D",
+      "category": "组合套餐",
+      "duration": "120分钟",
+      "image": "/media/foot.webp",
+      "subtitle": "组合套餐 · 120分钟",
+      "tag": "组合套餐",
+      "description": "客户服务价目资料列示项目。具体服务内容和价格请查看所选门店介绍。",
+      "steps": [],
+      "sortOrder": 200,
+      "enabled": true,
+      "aliases": []
+    }
+  ],
+  "stores": [
+    {
+      "id": "bai-le-men",
+      "name": "百乐门店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/bai-le-men.jpg",
+        "sha256": "34b63fb3b41f930ce245e610bc5236563688d49220bc9faa7a7f862530be2827",
+        "bytes": 534425,
+        "width": 2000,
+        "height": 2667,
+        "sourceFilename": "Weixin Image_20261105165734_717_402.jpg",
+        "sourceSha256": "00f2526c6e9f2fc3d63b3800bd84a1cad1539d348c8ce5ee0c26dc2211828000"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 398,
+              "专家": 520
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 388,
+              "特级": 488,
+              "专家": 588
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128
+            },
+            "basis": "menu-image",
+            "note": "专家价格未标注，请向门店确认"
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "容颜内调",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 298,
+              "特级": 298,
+              "专家": 398
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 706,
+              "特级": 856,
+              "专家": 1078
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 656,
+              "专家": 878
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 586,
+              "特级": 746,
+              "专家": 946
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 546,
+              "专家": 746
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shanghai",
+      "name": "上海中心店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/shanghai.jpg",
+        "sha256": "f576574e6bc3075f069ef18a183a0c67fee453689f69aed421a7dcc1f1954ae4",
+        "bytes": 598672,
+        "width": 2000,
+        "height": 2912,
+        "sourceFilename": "Weixin Image_20261105165736_719_402.jpg",
+        "sourceSha256": "a8541255c02ffff869d81abacf04f6d1c4a2a5b8cfe6152949fd0ac2b6490455"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 268,
+              "特级": 378,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 388,
+              "特级": 498,
+              "专家": 618
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 458,
+              "特级": 568,
+              "专家": 688
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 268,
+              "特级": 378,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-visceral-care",
+          "name": "脏腑调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 368,
+              "特级": 478,
+              "专家": 598
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 128,
+              "特级": 188,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 128,
+              "特级": 188,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "统一": 128
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-head",
+          "name": "采洗耳头部按摩",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 288
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "面部容颜",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 816,
+              "特级": 1036,
+              "专家": 1276
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 626,
+              "特级": 846,
+              "专家": 1086
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 696,
+              "特级": 916,
+              "专家": 1156
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 506,
+              "特级": 726,
+              "专家": 966
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-pediatric-tuina",
+          "name": "小儿推拿",
+          "duration": "30–60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {},
+            "basis": "pdf-only",
+            "note": "本店分档及适用时长待确认"
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "wujiang",
+      "name": "吴江路店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/wujiang.jpg",
+        "sha256": "49da1550c7134938f3b14066daa4064a34624391a6139e68f5c4ef87bd27577b",
+        "bytes": 505291,
+        "width": 2000,
+        "height": 2750,
+        "sourceFilename": "Weixin Image_20261105165737_720_402.jpg",
+        "sourceSha256": "e97dcc64027bbe9fa444ae77e6a2a31e8af2bd0eb4b756f696b67a2713ac45b3"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 388,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 558
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 338,
+              "特级": 398,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "统一": 128
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 716,
+              "特级": 816,
+              "专家": 1026
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 626,
+              "专家": 836
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 596,
+              "特级": 696,
+              "专家": 896
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 506,
+              "专家": 706
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-pediatric-tuina",
+          "name": "小儿推拿",
+          "duration": "30–60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {},
+            "basis": "pdf-only",
+            "note": "PDF 列示268–368元/小时；分档对应关系待确认"
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "容颜调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {},
+            "basis": "pdf-only",
+            "note": "PDF 列示298–398元；本店分档待确认"
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "huashan",
+      "name": "华山路店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/huashan.jpg",
+        "sha256": "835ad14602caca8908e200861cb0398e5972b41da25a9cd7baa1252c3d4fa45f",
+        "bytes": 537679,
+        "width": 2000,
+        "height": 2880,
+        "sourceFilename": "Weixin Image_20261105165740_721_402.jpg",
+        "sourceSha256": "40a6f84edd67d3225762fa10f3032adf0a0698deed02421d8e9c0be94fac0799"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 398,
+              "专家": 520
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 388,
+              "特级": 488,
+              "专家": 588
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "统一": 128
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 706,
+              "特级": 856,
+              "专家": 1078
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 656,
+              "专家": 878
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 586,
+              "特级": 746,
+              "专家": 946
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 546,
+              "专家": 746
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-pediatric-tuina",
+          "name": "小儿推拿",
+          "duration": "30–60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "小时",
+            "values": {
+              "统一": 288
+            },
+            "basis": "pdf-only",
+            "note": ""
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "容颜调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {},
+            "basis": "pdf-only",
+            "note": "PDF 列示298–398元；本店分档待确认"
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "taikoo",
+      "name": "太古汇店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/taikoo.jpg",
+        "sha256": "443f9cc98e1c03052383a67d7ea45cc4476952382c7df68caf56c94e01191d66",
+        "bytes": 509430,
+        "width": 2000,
+        "height": 2546,
+        "sourceFilename": "Weixin Image_20261105165743_722_402.jpg",
+        "sourceSha256": "309d87fa66ed72b8ce4cec49d8909b27f0fdbfe767d1e6946a026edd0ddaadb3"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 388,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 558
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 338,
+              "特级": 398,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "统一": 128
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 716,
+              "特级": 816,
+              "专家": 1026
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 626,
+              "专家": 836
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 596,
+              "特级": 696,
+              "专家": 896
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 506,
+              "专家": 706
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-pediatric-tuina",
+          "name": "小儿推拿",
+          "duration": "30–60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "小时",
+            "values": {
+              "统一": 268
+            },
+            "basis": "pdf-only",
+            "note": ""
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "meihua",
+      "name": "梅花路店",
+      "aliases": [
+        "梅花路中医诊所"
+      ],
+      "menu": {
+        "file": "menus/meihua.jpg",
+        "sha256": "361d6eb1f0e08ccb262e7badf2a0fcec8e6a4d6641f13af49a8b2b071b88494f",
+        "bytes": 413727,
+        "width": 2000,
+        "height": 2667,
+        "sourceFilename": "Weixin Image_20261105165745_723_402.jpg",
+        "sourceSha256": "f093177d27dd76e2c293fa5d13458c5eeccb0ab49ebe1547e39479c37d7847c5"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 268,
+              "特级": 378,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 388,
+              "特级": 498,
+              "专家": 618
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-visceral-care",
+          "name": "脏腑调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 368,
+              "特级": 478,
+              "专家": 598
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 128,
+              "特级": 188,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 128,
+              "特级": 188,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-meridian-care",
+          "name": "经络疏通",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 458,
+              "特级": 568,
+              "专家": 688
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·经络疏通＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 816,
+              "特级": 1036,
+              "专家": 1276
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-meridian-care",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 626,
+              "特级": 846,
+              "专家": 1086
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-pediatric-tuina",
+          "name": "小儿推拿",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "30分钟",
+            "values": {
+              "统一": 168
+            },
+            "basis": "pdf-only",
+            "note": ""
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "sichuan",
+      "name": "四川北路店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/sichuan.jpg",
+        "sha256": "27023abf90d1ec101d8d93aad14914da5226946a8b495acc4dbf9ac52b85014d",
+        "bytes": 485710,
+        "width": 2000,
+        "height": 2667,
+        "sourceFilename": "Weixin Image_20261105165746_724_402.jpg",
+        "sourceSha256": "76bed98b6bd90cdddfc30f91f74939e9070a75093dfb9aa7c6a3a4a0b9628127"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 388,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 558
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 338,
+              "特级": 398,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "统一": 128
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 716,
+              "特级": 816,
+              "专家": 1026
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 626,
+              "专家": 836
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 596,
+              "特级": 696,
+              "专家": 896
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 506,
+              "专家": 706
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "容颜调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {},
+            "basis": "pdf-only",
+            "note": "PDF 列示298–398元；本店分档待确认"
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    },
+    {
+      "id": "changde",
+      "name": "常德路店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/changde.jpg",
+        "sha256": "8f3bbd047c10eac2ef9e7c739993146b255eea4a854681c8430d917eecfd3ec8",
+        "bytes": 557949,
+        "width": 2000,
+        "height": 2667,
+        "sourceFilename": "Weixin Image_20261105165747_725_402.jpg",
+        "sourceSha256": "4a1947bcd9d91725620d3970b09185ed24764b6458c85f319cc9fec59dcaf76d"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 398,
+              "专家": 520
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 388,
+              "特级": 488,
+              "专家": 588
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 288,
+              "专家": 388
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 198
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128
+            },
+            "basis": "menu-image",
+            "note": "专家价格未标注，请向门店确认"
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-facial-care",
+          "name": "容颜内调",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 298,
+              "特级": 298,
+              "专家": 398
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-premium-foot",
+          "name": "大桶火龙",
+          "duration": "80分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 388,
+              "专家": 448
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 706,
+              "特级": 856,
+              "专家": 1078
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 656,
+              "专家": 878
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 586,
+              "特级": 746,
+              "专家": 946
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 546,
+              "专家": 746
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yuyao",
+      "name": "余姚路店",
+      "aliases": [],
+      "menu": {
+        "file": "menus/yuyao.jpg",
+        "sha256": "9f085cd95b102f405c383f1a7979b056c2e457ba6624df8637886dabb5cf93c4",
+        "bytes": 585624,
+        "width": 2000,
+        "height": 2869,
+        "sourceFilename": "Weixin Image_20261105165749_726_402.jpg",
+        "sourceSha256": "acb31b07cbb04e466be5ff3ffa6839edb138c5c0efe238c97534385c9ee5c64e"
+      },
+      "items": [
+        {
+          "serviceId": "yuht-symptom-care",
+          "name": "对症调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 1088
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "massage",
+          "name": "中医推拿",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "moxa",
+          "name": "扶阳悬灸",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 348,
+              "特级": 388,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-spa",
+          "name": "高端精油SPA",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 398,
+              "特级": 458,
+              "专家": 558
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "foot",
+          "name": "香薰足疗",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 228,
+              "特级": 268,
+              "专家": 368
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-specific-care",
+          "name": "专项调理",
+          "duration": "60分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 338,
+              "特级": 398,
+              "专家": 498
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-cupping",
+          "name": "拔罐",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "guasha",
+          "name": "刮痧",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-pedicure",
+          "name": "扦／刮／捏脚",
+          "duration": "每项",
+          "price": {
+            "currency": "CNY",
+            "unit": "项",
+            "values": {
+              "高级": 98,
+              "特级": 128,
+              "专家": 158
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-premium-foot",
+          "name": "大桶火龙",
+          "duration": "80分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "高级": 328,
+              "特级": 368,
+              "专家": 428
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image"
+        },
+        {
+          "serviceId": "yuht-package-a",
+          "name": "A套餐·精油SPA＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 716,
+              "特级": 816,
+              "专家": 1026
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-b",
+          "name": "B套餐·中医推拿＋扶阳悬灸",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 546,
+              "特级": 626,
+              "专家": 836
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            },
+            {
+              "serviceId": "moxa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-c",
+          "name": "C套餐·香薰足疗＋精油SPA",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 596,
+              "特级": 696,
+              "专家": 896
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "yuht-spa",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-package-d",
+          "name": "D套餐·香薰足疗＋中医推拿",
+          "duration": "120分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "套餐",
+            "values": {
+              "高级": 426,
+              "特级": 506,
+              "专家": 706
+            },
+            "basis": "menu-image",
+            "note": ""
+          },
+          "enabled": true,
+          "reviewStatus": "MENU_VERIFIED",
+          "source": "menu-image",
+          "components": [
+            {
+              "serviceId": "foot",
+              "minutes": 60
+            },
+            {
+              "serviceId": "massage",
+              "minutes": 60
+            }
+          ]
+        },
+        {
+          "serviceId": "yuht-ear-picking",
+          "name": "古法采耳",
+          "duration": "30分钟",
+          "price": {
+            "currency": "CNY",
+            "unit": "次",
+            "values": {
+              "统一": 188
+            },
+            "basis": "pdf-only",
+            "note": ""
+          },
+          "enabled": false,
+          "reviewStatus": "NEEDS_CONFIRMATION",
+          "source": "pdf-page-1"
+        }
+      ]
+    }
+  ]
+}

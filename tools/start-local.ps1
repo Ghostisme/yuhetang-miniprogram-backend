@@ -26,7 +26,7 @@ if (!$env:DB_URL) {
 $listeners = @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
 if ($listeners.Count -gt 0) {
     if (Test-Path -LiteralPath $statePath) {
-        $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+        $state = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
         $running = Get-CimInstance Win32_Process -Filter "ProcessId = $($state.pid)"
         if ($running -and $running.CommandLine.Contains($jarPath) -and $listeners.OwningProcess -contains $state.pid) {
             Write-Output "Already running: http://127.0.0.1:$Port/api/health"

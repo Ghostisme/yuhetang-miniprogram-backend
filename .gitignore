@@ -20,6 +20,7 @@ docs/*-result.json
 docs/restart-*.json
 target-api/
 target-notifications/
+target-client-services/
 backups/
 releases/
 __pycache__/

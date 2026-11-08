@@ -34,7 +34,9 @@ public class CatalogService {
     }
     List<Map<String,Object>> mergeServices(Map<String,Object> store,List<Map<String,Object>> brand,List<Map<String,Object>> overrides,boolean publicOnly){
         String storeId=str(store,"id");var profile=d.object(store.get("profileJson"));var disabled=d.strings(profile.get("disabledServiceIds"));List<Map<String,Object>> result=new ArrayList<>();
-        for(var base:brand){
+        // Independent stores expose only their own records, including after HQ adds
+        // or disables a brand template. Existing stores keep inheritance by default.
+        for(var base:"INDEPENDENT".equals(str(profile,"catalogMode"))?List.<Map<String,Object>>of():brand){
             String sid=str(base,"id");var override=overrides.stream().filter(o->sid.equals(str(o,"serviceId"))&&!bool(o,"custom")).findFirst();
             var s=new LinkedHashMap<>(base);boolean brandEnabled=bool(base,"enabled");
             if(override.isPresent())s.putAll(d.object(override.get().get("profileJson")));else s.put("enabled",brandEnabled&&!disabled.contains(sid));
