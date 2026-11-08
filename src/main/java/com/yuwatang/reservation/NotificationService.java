@@ -24,6 +24,8 @@ public class NotificationService {
         Map.entry("appointment.complete","接待已完成"),Map.entry("appointment.noshow","客户未到店"),
         Map.entry("appointment.overdue","预约待确认超时"),Map.entry("appointment.reminder","到店时间提醒"));
     static final Set<String> CUSTOMER_SMS_EVENTS=Set.of("appointment.confirm","appointment.reject","appointment.cancel","appointment.reschedule","appointment.reminder");
+    // The selected service-account template is a pending-order notice, not a status-change template.
+    static final Set<String> STAFF_WECHAT_EVENTS=Set.of("appointment.created","appointment.overdue");
     NotificationService(Data d,WechatGateway wx,CatalogService catalog,NotificationChannels channels,SmsGateway sms,PlatformTransactionManager manager){this.d=d;this.wx=wx;this.catalog=catalog;this.channels=channels;this.sms=sms;this.tx=new TransactionTemplate(manager);}
     void enqueue(Map<String,Object> booking,String type){
         String store=str(booking,"storeId"),bid=str(booking,"id"),event=bid+":"+booking.get("version")+":"+type;
@@ -31,10 +33,13 @@ public class NotificationService {
         Map<String,Object> payload=Map.of("appointmentId",bid,"storeName",catalog.store(store).get("name"),"serviceName",booking.get("serviceName"),"customerName",str(booking,"customerName"),"time",booking.get("bookingDate")+" "+booking.get("startTime"),"status",BookingService.LABELS.get(str(booking,"status")),"event",type,"eventLabel",EVENTS.getOrDefault(type,type));
         if(!type.equals("appointment.reminder")){
             if(bool(config,"pcEnabled"))add(event,store,bid,"INBOX",store,0,type,payload,"AVAILABLE","");
-            if(bool(config,"wechatStaffEnabled")){
+            if(bool(config,"wechatStaffEnabled")&&STAFF_WECHAT_EVENTS.contains(type)){
+                var staffPayload=new LinkedHashMap<>(payload);
+                staffPayload.put("customerPhone",str(booking,"phone"));
+                staffPayload.put("staffNotice",(type.equals("appointment.overdue")?"待确认超时·":"新预约待接单·")+payload.get("storeName"));
                 var receivers=d.rows("SELECT nr.* FROM notification_recipient nr JOIN app_user u ON nr.admin_user_id=u.id WHERE nr.store_id=? AND nr.enabled=TRUE AND u.enabled=TRUE AND u.store_id=nr.store_id",store);
-                if(receivers.isEmpty())add(event,store,bid,"SERVICE","unbound",0,type,payload,"BLOCKED","本门店尚未绑定微信接收人。");
-                else{var r=receivers.get(0);String openid=str(r,"openid");add(event,store,bid,"SERVICE",str(r,"adminUserId"),integer(r,"generation",0),type,payload,openid.isBlank()?"BLOCKED":"PENDING",openid.isBlank()?"接收人尚未在微信完成确认绑定。":"");}
+                if(receivers.isEmpty())add(event,store,bid,"SERVICE","unbound",0,type,staffPayload,"BLOCKED","本门店尚未绑定微信接收人。");
+                else{var r=receivers.get(0);String openid=str(r,"openid");add(event,store,bid,"SERVICE",str(r,"adminUserId"),integer(r,"generation",0),type,staffPayload,openid.isBlank()?"BLOCKED":"PENDING",openid.isBlank()?"接收人尚未在微信完成确认绑定。":"");}
             }
             if(bool(config,"smsStaffEnabled"))add(event,store,bid,"SMS","staff",integer(config,"revision",0),type,payload,"PENDING","");
         }
@@ -94,14 +99,20 @@ public class NotificationService {
         // use that same template, even if the operator changes the current configuration.
         String template=service?wx.serviceTemplate:values.containsKey("subscriptionTemplateId")?str(values,"subscriptionTemplateId"):wx.customerTemplate(str(item,"eventType"));
         if(template.isBlank()){finish(id,"BLOCKED",attempts,"尚未配置匹配的微信消息模板，不代表已发送。");return;}
-        if(!service){var current=d.rows("SELECT id,version FROM appointment WHERE id=?",item.get("appointmentId"));if(current.isEmpty()||!str(item,"eventKey").startsWith(str(current.get(0),"id")+":"+current.get(0).get("version")+":")){finish(id,"CANCELLED",attempts,"预约已有更新，停止发送旧状态订阅消息。");return;}}
+        if(service&&!STAFF_WECHAT_EVENTS.contains(str(item,"eventType"))){finish(id,"CANCELLED",attempts,"待接单模板仅用于新预约及待确认超时。");return;}
+        var current=d.rows("SELECT id,version,status FROM appointment WHERE id=?",item.get("appointmentId"));
+        if(current.isEmpty()||!str(item,"eventKey").startsWith(str(current.get(0),"id")+":"+current.get(0).get("version")+":")||service&&!str(current.get(0),"status").equals("PENDING")){
+            finish(id,"CANCELLED",attempts,service?"预约已处理或更新，停止发送旧待接单提醒。":"预约已有更新，停止发送旧状态订阅消息。");return;
+        }
         if(service){var receivers=d.rows("SELECT nr.* FROM notification_recipient nr JOIN app_user u ON nr.admin_user_id=u.id WHERE nr.store_id=? AND nr.enabled=TRUE AND u.enabled=TRUE AND u.store_id=nr.store_id",item.get("storeId"));if(receivers.isEmpty()||integer(receivers.get(0),"generation",0)!=integer(item,"recipientGeneration",0)||!str(receivers.get(0),"adminUserId").equals(str(item,"recipientId"))){finish(id,"CANCELLED",attempts,"接收人已更换或解绑，停止给原人员发送。");return;}target=str(receivers.get(0),"openid");if(target.isBlank()){finish(id,"BLOCKED",attempts,"接收人尚未绑定。");return;}}
         else{var identities=d.rows("SELECT * FROM customer_identity WHERE id=?",item.get("recipientId"));if(identities.isEmpty()||bool(identities.get(0),"isDevelopment")){finish(id,"BLOCKED",attempts,"本地模拟身份不能发送真实微信消息。");return;}target=str(identities.get(0),"openid");if(!bool(item,"grantReserved")&&d.count("SELECT COUNT(*) FROM subscription_grant WHERE customer_id=? AND template_id=? AND remaining>0",item.get("recipientId"),template)==0){finish(id,"BLOCKED",attempts,"客户未订阅或可用次数不足。");return;}}
         Map<String,Object> data=new LinkedHashMap<>();
         if(!service&&values.containsKey("subscriptionData"))data.putAll(d.object(values.get("subscriptionData")));
         else{
             var mapping=d.rows("SELECT setting_value FROM app_setting WHERE setting_key=?",service?"serviceTemplateMapping":wx.customerMapping(str(item,"eventType")));if(mapping.isEmpty()){finish(id,"BLOCKED",attempts,"需按正式账号模板字段配置映射。");return;}
-            for(var e:d.object(mapping.get(0).get("settingValue")).entrySet()){
+            var fields=d.object(mapping.get(0).get("settingValue"));
+            if(!NotificationFields.valid(service?"serviceTemplateMapping":wx.customerMapping(str(item,"eventType")),fields)){finish(id,"BLOCKED",attempts,"模板字段映射无效，请核对字段键及预约摘要字段。");return;}
+            for(var e:fields.entrySet()){
                 String value=str(values,e.getValue().toString());int limit=e.getKey().startsWith("phrase")?5:e.getKey().startsWith("name")?10:20;
                 if(value.codePointCount(0,value.length())>limit)value=value.substring(0,value.offsetByCodePoints(0,limit));
                 data.put(e.getKey(),Map.of("value",value));

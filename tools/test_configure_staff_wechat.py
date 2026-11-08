@@ -24,5 +24,13 @@ class StaffConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError): module.validate({**values, "SERVICE_TEMPLATE_MAPPING": '{"thing1":"phone"}'})
         with self.assertRaises(ValueError): module.validate({**values, "PUBLIC_URL": "https://user:secret@fixture.invalid"})
 
+    def test_selected_pending_template_accepts_staff_phone_and_store_notice(self):
+        import json
+        values = {"SERVICE_APP_ID": module.STAFF_APP_ID, "SERVICE_APP_SECRET": "a" * 32,
+                  "SERVICE_TEMPLATE_ID": module.STAFF_TEMPLATE_ID, "PUBLIC_URL": "https://mp-admin.hetuonian.cn",
+                  "SERVICE_TEMPLATE_MAPPING": json.dumps(module.STAFF_MAPPING)}
+        module.validate(values)
+        self.assertEqual("customerPhone", module.STAFF_MAPPING["phone_number3"])
+
 
 if __name__ == "__main__": unittest.main()

@@ -27,7 +27,7 @@ class Bootstrap implements CommandLineRunner {
         if(value.isBlank()||d.count("SELECT COUNT(*) FROM app_setting WHERE setting_key=?",key)>0)return;
         Map<String,Object> mapping=d.object(value);
         if(mapping.isEmpty()||value.length()>2000)throw new IllegalStateException("Invalid WeChat template mapping: "+key);
-        for(var entry:mapping.entrySet())if(!entry.getKey().matches("(?:[a-z_]+[0-9]+|first|remark)")||!Set.of("storeName","serviceName","customerName","time","status","appointmentId","event","eventLabel").contains(Objects.toString(entry.getValue(),"")))throw new IllegalStateException("Invalid WeChat template field: "+key);
+        if(!NotificationFields.valid(key,mapping))throw new IllegalStateException("Invalid WeChat template field: "+key);
         d.update("INSERT INTO app_setting VALUES(?,?)",key,d.stringify(mapping));
     }
     static final String[][] PERMISSIONS={

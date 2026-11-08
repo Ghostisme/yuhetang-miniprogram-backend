@@ -38,6 +38,7 @@ class CustomerSubscriptionIntegrationTest {
     // Exact field keys from the two templates selected in this mini-program account.
     final Map<String,String> resultMapping=Map.of("name1","customerName","date2","time","thing3","serviceName","thing4","storeName","phrase5","status");
     final Map<String,String> reminderMapping=Map.of("thing31","customerName","time2","time","thing7","serviceName","thing8","storeName","phrase11","status");
+    final Map<String,String> staffMapping=Map.of("thing1","serviceName","time2","time","phone_number3","customerPhone","thing4","staffNotice");
 
     @BeforeAll void manualDispatchOnly(){scheduler.destroy();}
     @BeforeEach void reset()throws Exception{
@@ -57,10 +58,13 @@ class CustomerSubscriptionIntegrationTest {
     }
     void grant(String template)throws Exception{request(post("/api/me/subscriptions"),customerToken,Map.of("templateId",template,"accepted",true),200);}
     int remaining(String template){return d.count("SELECT COALESCE(SUM(remaining),0) FROM subscription_grant WHERE customer_id=? AND template_id=?",customerId,template);}
-    Map<String,Object> confirm()throws Exception{
+    Map<String,Object> create()throws Exception{
         var input=new LinkedHashMap<String,Object>(Map.of("storeId","yuyao","serviceId","moxa","date",LocalDate.now(ZONE).plusDays(1).toString(),"startTime","10:00","headcount",1,"name","订阅验证客户","phone","13900003002","privacyConsent",true));
         input.put("memberClaim","NO");input.put("visitedClaim","NO");
-        var created=request(post("/api/appointments").header("Idempotency-Key",id()),customerToken,input,200);
+        return request(post("/api/appointments").header("Idempotency-Key",id()),customerToken,input,200);
+    }
+    Map<String,Object> confirm()throws Exception{
+        var created=create();
         return request(patch("/api/admin/appointments/"+created.get("id")),manager,Map.of("action","confirm","version",created.get("version")),200);
     }
     Map<String,Object> resultRow(){return d.one("SELECT * FROM notification_outbox WHERE channel='SUBSCRIBE' AND event_type='appointment.confirm'");}
@@ -128,11 +132,14 @@ class CustomerSubscriptionIntegrationTest {
         var confirmed=mvc.perform(post("/api/wechat/service/confirm").param("state",state)).andReturn().getResponse();assertEquals(200,confirmed.getStatus());
         assertEquals("staff-bound-openid",d.one("SELECT openid FROM notification_recipient WHERE store_id='yuyao'").get("openid"));
         assertEquals(400,mvc.perform(post("/api/wechat/service/confirm").param("state",state)).andReturn().getResponse().getStatus());
-        var mapping=Map.of("thing1","storeName","time2","time","thing3","eventLabel");
-        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",mapping),200);
-        confirm();notifications.dispatch();
-        assertEquals(2,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE' AND delivery_status='ACCEPTED'"));
-        verify(wx,times(2)).send(eq(true),eq("staff-bound-openid"),eq("fixture-staff-template"),argThat(data->data.keySet().equals(mapping.keySet())),anyString());
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",staffMapping),200);
+        var booking=create();notifications.dispatch();
+        assertEquals(1,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE' AND delivery_status='ACCEPTED'"));
+        verify(wx,times(1)).send(eq(true),eq("staff-bound-openid"),eq("fixture-staff-template"),argThat(data->data.keySet().equals(staffMapping.keySet())&&Map.of("value","13900003002").equals(data.get("phone_number3"))&&str(d.object(data.get("thing4")),"value").startsWith("新预约待接单·")),eq(str(booking,"id")));
+        assertTrue(d.rows("SELECT payload_json FROM notification_outbox WHERE channel<>'SERVICE'").stream().noneMatch(row->str(row,"payloadJson").contains("13900003002")),"Staff phone must not leak into PC inbox or customer template payloads.");
+        request(patch("/api/admin/appointments/"+booking.get("id")),manager,Map.of("action","confirm","version",booking.get("version")),200);
+        notifications.dispatch();
+        assertEquals(1,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE'"),"A pending-order template must not be reused for confirmation results.");
         request(delete("/api/admin/notifications/binding/yuyao"),manager,null,200);
         assertFalse(bool(d.one("SELECT enabled FROM notification_recipient WHERE store_id='yuyao'"),"enabled"));
     }
@@ -145,6 +152,49 @@ class CustomerSubscriptionIntegrationTest {
         check=request(post("/api/admin/notifications/wechat/check"),manager,Map.of("audience","STAFF"),200);assertTrue(bool(check,"ready"));
         request(post("/api/admin/notifications/wechat/check"),customerToken,Map.of("audience","STAFF"),401);
         verify(wx,never()).send(anyBoolean(),anyString(),anyString(),anyMap(),anyString());
+    }
+    @Test void pendingStaffNoticeCannotOutliveTheBookingOrReachANewRecipient()throws Exception{
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",staffMapping),200);
+        d.update("INSERT INTO notification_recipient(store_id,admin_user_id,openid,generation,enabled) VALUES('yuyao','yuyao-manager','bound-fixture',1,TRUE)");
+        var booking=create();
+        notifications.enqueue(bookings.get(str(booking,"id")),"appointment.overdue");
+        notifications.enqueue(bookings.get(str(booking,"id")),"appointment.overdue");
+        assertEquals(2,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE'"));
+        request(patch("/api/admin/appointments/"+booking.get("id")),manager,Map.of("action","confirm","version",booking.get("version")),200);
+        notifications.dispatch();
+        assertEquals(2,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE' AND delivery_status='CANCELLED'"));
+        verify(wx,never()).send(eq(true),anyString(),anyString(),anyMap(),anyString());
+        create();d.update("UPDATE notification_recipient SET generation=2,openid='replacement-fixture' WHERE store_id='yuyao'");
+        notifications.dispatch();
+        assertEquals(3,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SERVICE' AND delivery_status='CANCELLED'"));
+        verify(wx,never()).send(eq(true),anyString(),anyString(),anyMap(),anyString());
+    }
+    @Test void staffPhoneMappingIsForbiddenInCustomerTemplatesAndInvalidFieldKeysAreRejected()throws Exception{
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",staffMapping),200);
+        request(put("/api/admin/settings"),hq,Map.of("customerTemplateMapping",staffMapping),400);
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",Map.of("invalid-key","storeName")),400);
+        var configured=new Bootstrap(d,auth,"","","");configured.serviceMapping=d.stringify(staffMapping);
+        d.update("DELETE FROM app_setting WHERE setting_key='serviceTemplateMapping'");configured.initializeTemplateMappings();
+        assertEquals(staffMapping,d.object(d.one("SELECT setting_value FROM app_setting WHERE setting_key='serviceTemplateMapping'").get("settingValue")));
+    }
+    @Test void remoteTemplateCheckRejectsSurplusKeysAsWellAsMissingFields()throws Exception{
+        doReturn(List.of(Map.of("template_id","fixture-staff-template","content","项目{{thing1.DATA}} 时间{{time2.DATA}} 电话{{phone_number3.DATA}} 备注{{thing4.DATA}}"))).when(wx).notificationTemplates(true);
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",staffMapping),200);
+        assertTrue(bool(request(post("/api/admin/notifications/wechat/check"),hq,Map.of("audience","STAFF"),200),"ready"));
+        var extra=new LinkedHashMap<String,Object>(staffMapping);extra.put("thing99","storeName");
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",extra),200);
+        var invalid=request(post("/api/admin/notifications/wechat/check"),hq,Map.of("audience","STAFF"),200);
+        assertFalse(bool(invalid,"ready"));assertTrue(d.stringify(invalid).contains("thing99"));
+        verify(wx,never()).send(anyBoolean(),anyString(),anyString(),anyMap(),anyString());
+    }
+    @Test void schedulerSendsOneArrivalReminderWithItsOwnAllowance()throws Exception{
+        grant("fixture-result");grant("fixture-reminder");var booking=confirm();notifications.dispatch();
+        var near=java.time.LocalDateTime.now(ZONE).plusMinutes(5);
+        d.update("UPDATE appointment SET booking_date=?,start_time=? WHERE id=?",near.toLocalDate().toString(),near.toLocalTime().withSecond(0).withNano(0).toString(),booking.get("id"));
+        notifications.reminders();notifications.reminders();notifications.dispatch();notifications.dispatch();
+        assertEquals(1,d.count("SELECT COUNT(*) FROM notification_outbox WHERE channel='SUBSCRIBE' AND event_type='appointment.reminder' AND delivery_status='ACCEPTED'"));
+        assertEquals(0,remaining("fixture-result"));assertEquals(0,remaining("fixture-reminder"));
+        verify(wx,times(1)).send(eq(false),anyString(),eq("fixture-reminder"),anyMap(),eq(str(booking,"id")));
     }
 
     @Test void runtimeAndGrantsKeepTemplateChoicesSeparate()throws Exception{

@@ -15,6 +15,9 @@ import tempfile
 from urllib.parse import urlsplit
 
 EDITABLE = frozenset({"SERVICE_APP_ID", "SERVICE_APP_SECRET", "SERVICE_TEMPLATE_ID", "SERVICE_TEMPLATE_MAPPING", "PUBLIC_URL"})
+STAFF_APP_ID = "wxf9ad4dfd7684097a"
+STAFF_TEMPLATE_ID = "uxrBTYh7rLOfcO0GKajIKEpFeQ2OtY0prH8a9WBVxrk"
+STAFF_MAPPING = {"thing1": "serviceName", "time2": "time", "phone_number3": "customerPhone", "thing4": "staffNotice"}
 
 
 def render(original, changes):
@@ -48,14 +51,14 @@ def validate(changes):
         raise ValueError("PUBLIC_URL must be an HTTPS origin without a path.")
     if "SERVICE_TEMPLATE_MAPPING" in changes:
         mapping = json.loads(changes["SERVICE_TEMPLATE_MAPPING"])
-        values = {"storeName", "serviceName", "customerName", "time", "status", "appointmentId", "event", "eventLabel"}
+        values = {"storeName", "serviceName", "customerName", "time", "status", "appointmentId", "event", "eventLabel", "customerPhone", "staffNotice"}
         if not isinstance(mapping, dict) or not mapping or any(not re.fullmatch(r"(?:[a-z_]+[0-9]+|first|remark)", k) or v not in values for k, v in mapping.items()):
             raise ValueError("Use the actual template field keys and supported booking summary fields.")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--app-id", default="")
+    parser.add_argument("--app-id", default=STAFF_APP_ID)
     args = parser.parse_args()
     if not hasattr(os, "geteuid") or os.geteuid() != 0 or not sys.stdin.isatty():
         parser.exit(1, "Run interactively: sudo python3 configure-staff-wechat.py --app-id SERVICE_APP_ID\n")
@@ -67,11 +70,10 @@ def main():
     changes = {}
     changes["SERVICE_APP_ID"] = args.app_id or input("Service account AppID: ").strip()
     changes["SERVICE_APP_SECRET"] = getpass.getpass("Service AppSecret (hidden; Enter keeps current): ").strip() or current.get("SERVICE_APP_SECRET", "")
-    changes["SERVICE_TEMPLATE_ID"] = input("Full staff template ID: ").strip()
+    changes["SERVICE_TEMPLATE_ID"] = input("Full staff template ID [" + STAFF_TEMPLATE_ID + "]: ").strip() or STAFF_TEMPLATE_ID
     changes["PUBLIC_URL"] = input("HTTPS admin origin [https://mp-admin.hetuonian.cn]: ").strip() or "https://mp-admin.hetuonian.cn"
-    mapping = input("Actual field mapping JSON (Enter configures it later in admin): ").strip()
-    if mapping:
-        changes["SERVICE_TEMPLATE_MAPPING"] = mapping
+    default_mapping = json.dumps(STAFF_MAPPING, ensure_ascii=False, separators=(",", ":"))
+    changes["SERVICE_TEMPLATE_MAPPING"] = input("Actual field mapping JSON [" + default_mapping + "]: ").strip() or default_mapping
     try:
         validate(changes); content = render(original, changes)
     except (ValueError, TypeError) as error:

@@ -9,7 +9,7 @@ import static com.yuwatang.reservation.Data.*;
 class NotificationReadiness {
     final Data d;final AuthService auth;final WechatGateway wx;final SmsGateway sms;
     NotificationReadiness(Data d,AuthService auth,WechatGateway wx,SmsGateway sms){this.d=d;this.auth=auth;this.wx=wx;this.sms=sms;}
-    boolean mappingReady(String key){var rows=d.rows("SELECT setting_value FROM app_setting WHERE setting_key=?",key);if(rows.isEmpty())return false;try{return !d.object(rows.get(0).get("settingValue")).isEmpty();}catch(RuntimeException invalid){return false;}}
+    boolean mappingReady(String key){var rows=d.rows("SELECT setting_value FROM app_setting WHERE setting_key=?",key);if(rows.isEmpty())return false;try{return NotificationFields.valid(key,d.object(rows.get(0).get("settingValue")));}catch(RuntimeException invalid){return false;}}
     Map<String,Object> template(boolean reminder){
         String id=reminder?wx.customerReminderTemplate:wx.customerTemplate;
         String issue=id.isBlank()?"服务器尚未配置此订阅模板。":!mappingReady(wx.customerMapping(reminder?"appointment.reminder":"appointment.confirm"))?"总部尚未配置此模板的字段映射。":wx.appId.isBlank()||wx.secret.isBlank()?"服务器尚未配置小程序 AppID / AppSecret。":"";
@@ -23,7 +23,7 @@ class NotificationReadiness {
         if(!mappingReady("serviceTemplateMapping"))issues.add("待配置服务号模板字段映射。");
         if(!wx.publicUrl.startsWith("https://"))issues.add("待配置 HTTPS 的 PUBLIC_URL，并在服务号配置网页授权域名。");
         return Map.of("customer",Map.of("templates",List.of(template(false),template(true)),"credentialsConfigured",!wx.appId.isBlank()&&!wx.secret.isBlank()),
-                "staff",Map.of("ready",issues.isEmpty(),"issues",issues),"sms",Map.of("configured",sms.configured(),"staffIssue",sms.issue(true),"customerIssue",sms.issue(false)));
+                "staff",Map.of("ready",issues.isEmpty(),"issues",issues,"templateId",wx.serviceTemplate,"events",List.of("新预约待接单","待确认超时")),"sms",Map.of("configured",sms.configured(),"staffIssue",sms.issue(true),"customerIssue",sms.issue(false)));
     }
     @PostMapping("/api/admin/notifications/wechat/check") @Permit("notifications:write")
     Map<String,Object> check(HttpServletRequest r,@RequestBody Map<String,Object> in){
@@ -39,9 +39,13 @@ class NotificationReadiness {
                 var fields=new HashSet<String>();var matcher=java.util.regex.Pattern.compile("\\{\\{\\s*([A-Za-z_][A-Za-z_0-9]*)\\.DATA\\s*\\}\\}").matcher(str(found.get(),"content"));
                 while(matcher.find())fields.add(matcher.group(1));
                 var stored=d.rows("SELECT setting_value FROM app_setting WHERE setting_key=?",mapping);
-                Set<String> configured=stored.isEmpty()?Set.of():d.object(stored.get(0).get("settingValue")).keySet();
+                Map<String,Object> storedMapping=stored.isEmpty()?Map.of():d.object(stored.get(0).get("settingValue"));
+                Set<String> configured=storedMapping.keySet();
                 if(configured.isEmpty())issue="总部尚未配置模板字段映射。";
+                else if(!NotificationFields.valid(mapping,storedMapping))issue="模板字段键或预约摘要字段不正确。";
+                else if(fields.isEmpty())issue="微信返回的模板未包含可校验的字段，请核对模板类型。";
                 else if(!fields.isEmpty()&&!configured.containsAll(fields)){fields.removeAll(configured);issue="缺少微信模板字段："+String.join("、",new TreeSet<>(fields));}
+                else if(!fields.containsAll(configured)){var extra=new TreeSet<>(configured);extra.removeAll(fields);issue="存在不属于微信模板的字段："+String.join("、",extra);}
             }
             templates.add(Map.of("title",service?"店长微信提醒":reminder?"到店时间提醒":"预约处理提醒","templateId",id,"ready",issue.isEmpty(),"issue",issue));
         }
