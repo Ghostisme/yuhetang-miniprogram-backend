@@ -12,6 +12,7 @@ import static com.yuwatang.reservation.Data.*;
 class Bootstrap implements CommandLineRunner {
     final Data d; final AuthService auth; final String password,resultMapping,reminderMapping;
     @Value("${app.wechat.service-template-mapping:}") String serviceMapping="";
+    @Value("${app.wechat.service-template:}") String serviceTemplateId="";
     Bootstrap(Data d,AuthService auth,@Value("${app.admin-password}")String password,
               @Value("${app.wechat.customer-template-mapping:}")String resultMapping,
               @Value("${app.wechat.customer-reminder-template-mapping:}")String reminderMapping){
@@ -21,7 +22,15 @@ class Bootstrap implements CommandLineRunner {
     void initializeTemplateMappings(){
         initializeMapping("customerTemplateMapping",resultMapping);
         initializeMapping("customerReminderTemplateMapping",reminderMapping);
-        initializeMapping("serviceTemplateMapping",serviceMapping);
+        if(StaffAppointmentTemplate.ID.equals(serviceTemplateId)){
+            // This private template has a fixed field contract; repair stale settings
+            // left by the former subscription template without changing other templates.
+            String expected=d.stringify(StaffAppointmentTemplate.FIELDS);
+            if(d.count("SELECT COUNT(*) FROM app_setting WHERE setting_key='serviceTemplateMapping'")==0)
+                d.update("INSERT INTO app_setting VALUES('serviceTemplateMapping',?)",expected);
+            else if(!StaffAppointmentTemplate.FIELDS.equals(d.object(d.one("SELECT setting_value FROM app_setting WHERE setting_key='serviceTemplateMapping'").get("settingValue"))))
+                d.update("UPDATE app_setting SET setting_value=? WHERE setting_key='serviceTemplateMapping'",expected);
+        }else initializeMapping("serviceTemplateMapping",serviceMapping);
     }
     void initializeMapping(String key,String value){
         if(value.isBlank()||d.count("SELECT COUNT(*) FROM app_setting WHERE setting_key=?",key)>0)return;

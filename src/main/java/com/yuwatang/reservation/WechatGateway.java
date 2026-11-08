@@ -120,7 +120,7 @@ public class WechatGateway {
         String token;
         try{token=access(service);}catch(ResponseStatusException e){throw new NotificationNotAttemptedException("通知尚未提交微信："+e.getReason());}
         Map<String,Object> body=new LinkedHashMap<>();body.put("touser",recipient);body.put("template_id",template);body.put("data",data);
-        if(service){if(publicUrl.startsWith("https://"))body.put("url",publicUrl.replaceAll("/+$","")+"/admin");}
+        if(service){if(publicUrl.startsWith("https://"))body.put("url",publicUrl.replaceAll("/+$","")+"/admin?appointment="+enc(appointment));}
         else body.put("page","pages/orders/index?id="+appointment);
         return post("https://api.weixin.qq.com/cgi-bin/"+(service?"message/template/send":"message/subscribe/send")+"?access_token="+enc(token),body);
     }

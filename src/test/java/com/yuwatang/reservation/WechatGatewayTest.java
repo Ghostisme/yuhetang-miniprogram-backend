@@ -60,6 +60,20 @@ class WechatGatewayTest {
         server.expect(requestTo("https://fixture.invalid/json")).andRespond(withSuccess().body("{\"errcode\":0}"));
         assertEquals(0,gateway.post("https://fixture.invalid/json",Map.of()).get("errcode"));server.verify();
     }
+    @Test void staffNoticeUsesItsOwnAccountAndLinksToTheExactAppointment(){
+        var builder=RestClient.builder();server=MockRestServiceServer.bindTo(builder).build();
+        var staff=new WechatGateway("fixture-app","fixture-secret","staff-app","staff-secret","","",StaffAppointmentTemplate.ID,"https://mp-admin.hetuonian.cn/",new ObjectMapper(),builder.build());
+        server.expect(requestTo("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=staff-app&secret=staff-secret"))
+            .andRespond(withSuccess("{\"access_token\":\"staff-token\",\"expires_in\":7200}",MediaType.APPLICATION_JSON));
+        var fields=Map.of("thing10",Map.of("value","上海中心店"),"thing14",Map.of("value","舒缓养护"),"time12",Map.of("value","2026-11-10 15:00"),"thing16",Map.of("value","测试客户"),"phone_number9",Map.of("value","13900003002"));
+        server.expect(requestTo("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=staff-token"))
+            .andExpect(method(HttpMethod.POST)).andExpect(content().json(new ObjectMapper().valueToTree(Map.of(
+                "touser","bound-manager","template_id",StaffAppointmentTemplate.ID,"data",fields,
+                "url","https://mp-admin.hetuonian.cn/admin?appointment=YHT-ABC123")).toString(),true))
+            .andExpect(request->assertTrue(request.getHeaders().getContentLength()>0,"WeChat requires a fixed body length"))
+            .andRespond(withSuccess("{\"errcode\":0,\"msgid\":123}",MediaType.APPLICATION_JSON));
+        assertEquals(0,staff.send(true,"bound-manager",StaffAppointmentTemplate.ID,new java.util.LinkedHashMap<>(fields),"YHT-ABC123").get("errcode"));server.verify();
+    }
     @Test void tokenRejectionDoesNotAttemptCustomerSendOrExposeProviderDetails(){
         server.expect(requestTo(tokenUrl)).andRespond(withSuccess("{\"errcode\":40164,\"errmsg\":\"fixture-secret and raw provider diagnostics\"}",MediaType.TEXT_PLAIN));
         var failure=assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->gateway.sendCustomerText("fixture-openid","您好"));

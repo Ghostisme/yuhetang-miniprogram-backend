@@ -69,6 +69,45 @@ class CustomerSubscriptionIntegrationTest {
     }
     Map<String,Object> resultRow(){return d.one("SELECT * FROM notification_outbox WHERE channel='SUBSCRIBE' AND event_type='appointment.confirm'");}
 
+    @Test void officialStaffTemplateRepairsOnlyItsOwnStaleFieldMapping(){
+        d.update("INSERT INTO app_setting VALUES('serviceTemplateMapping',?)",d.stringify(staffMapping));
+        var configured=new Bootstrap(d,auth,"","","");configured.serviceTemplateId=StaffAppointmentTemplate.ID;
+        configured.initializeTemplateMappings();configured.initializeTemplateMappings();
+        assertEquals(StaffAppointmentTemplate.FIELDS,d.object(d.one("SELECT setting_value FROM app_setting WHERE setting_key='serviceTemplateMapping'").get("settingValue")));
+        d.update("UPDATE app_setting SET setting_value=? WHERE setting_key='serviceTemplateMapping'",d.stringify(staffMapping));
+        configured.serviceTemplateId="another-private-template";configured.initializeTemplateMappings();
+        assertEquals(staffMapping,d.object(d.one("SELECT setting_value FROM app_setting WHERE setting_key='serviceTemplateMapping'").get("settingValue")));
+    }
+
+    @Test void confirmedRescheduleNotifiesStaffAndApprovalSendsCustomerTheNewTime()throws Exception{
+        request(put("/api/admin/settings"),hq,Map.of("serviceTemplateMapping",StaffAppointmentTemplate.FIELDS),200);
+        d.update("INSERT INTO notification_recipient(store_id,admin_user_id,openid,generation,enabled) VALUES('yuyao','yuyao-manager','staff-bound-openid',1,TRUE)");
+        var booking=confirm();notifications.dispatch();grant("fixture-result");clearInvocations(wx);
+        var changed=request(patch("/api/me/appointments/"+booking.get("id")),customerToken,Map.of("action","reschedule","version",booking.get("version"),"date",booking.get("bookingDate"),"startTime","11:00"),200);
+        assertEquals("CONFIRMED",changed.get("status"));assertEquals("10:00",changed.get("startTime"));notifications.dispatch();
+        verify(wx).send(eq(true),eq("staff-bound-openid"),eq("fixture-staff-template"),argThat(fields->fields.keySet().equals(StaffAppointmentTemplate.FIELDS.keySet())&&str(d.object(fields.get("thing10")),"value").equals("余姚路店")&&str(d.object(fields.get("thing14")),"value").equals(str(booking,"serviceName"))&&str(d.object(fields.get("time12")),"value").endsWith("11:00")&&str(d.object(fields.get("thing16")),"value").equals("订阅验证客户")&&str(d.object(fields.get("phone_number9")),"value").equals("13900003002")),eq(str(booking,"id")));
+        verify(wx,never()).send(eq(false),anyString(),anyString(),anyMap(),anyString());
+        clearInvocations(wx);
+        request(patch("/api/admin/appointments/"+booking.get("id")),manager,Map.of("action","approve_reschedule","version",changed.get("version")),200);notifications.dispatch();
+        verify(wx).send(eq(false),anyString(),eq("fixture-result"),argThat(fields->str(d.object(fields.get("date2")),"value").endsWith("11:00")&&str(d.object(fields.get("phrase5")),"value").equals("改约已确认")),eq(str(booking,"id")));
+        verify(wx,never()).send(eq(true),anyString(),anyString(),anyMap(),anyString());assertEquals(0,remaining("fixture-result"));
+    }
+
+    @Test void rejectedOrExpiredChangesNotifyTheCustomerOnceAndKeepOriginalTime()throws Exception{
+        for(boolean expire:List.of(false,true)){
+            var booking=confirm();notifications.dispatch();grant("fixture-result");clearInvocations(wx);
+            var changed=request(patch("/api/me/appointments/"+booking.get("id")),customerToken,Map.of("action","reschedule","version",booking.get("version"),"date",booking.get("bookingDate"),"startTime","11:00"),200);
+            if(expire){
+                d.update("UPDATE appointment_reschedule SET expires_at=? WHERE appointment_id=?",java.time.OffsetDateTime.now(ZONE).minusSeconds(1).toString(),booking.get("id"));
+                bookings.expireReschedule(str(booking,"id"));bookings.expireReschedule(str(booking,"id"));
+            }else request(patch("/api/admin/appointments/"+booking.get("id")),manager,Map.of("action","reject_reschedule","version",changed.get("version"),"note","新时间无空房，原预约保留"),200);
+            notifications.dispatch();notifications.dispatch();
+            String status=expire?"改约已失效":"改约未通过";
+            verify(wx,times(1)).send(eq(false),anyString(),eq("fixture-result"),argThat(fields->str(d.object(fields.get("date2")),"value").endsWith("10:00")&&str(d.object(fields.get("phrase5")),"value").equals(status)),eq(str(booking,"id")));
+            var current=bookings.get(str(booking,"id"));assertEquals("10:00",current.get("startTime"));assertEquals("CONFIRMED",current.get("status"));assertEquals(0,remaining("fixture-result"));
+        }
+    }
+
     @Test void acknowledgementRetriesNeverDuplicateAnAllowance()throws Exception{
         String requestId=id();var input=Map.of("templateId","fixture-result","accepted",true,"requestId",requestId);
         request(post("/api/me/subscriptions"),customerToken,input,200);request(post("/api/me/subscriptions"),customerToken,input,200);
