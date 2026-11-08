@@ -39,7 +39,7 @@ class ProductionBootstrapTest {
         auth=new AuthService(d,"production","production-bootstrap-test-secret-more-than-32-characters","target/unused-clean-bootstrap",manager);
         auth.init();bootstrap=new Bootstrap(d,auth,PASSWORD,RESULT_MAPPING,REMINDER_MAPPING);
         catalog=new CatalogService(d,new BookingLocks(d));
-        admin=new AdminService(d,auth,catalog,new BookingService(d,catalog,null));
+        admin=new AdminService(d,auth,catalog,new BookingService(d,catalog,null,new MemberBookings(d),new PaymentReservations(d,new ReservedPaymentPort())));
         files=new FilesApi(d,auth,admin,catalog,"target/unused-clean-bootstrap");
         start(bootstrap);
     }

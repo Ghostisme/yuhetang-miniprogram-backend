@@ -16,7 +16,7 @@ class PublicApi {
         if(request.checkNotModified(etag))return null;
         return org.springframework.http.ResponseEntity.ok().eTag(etag).cacheControl(org.springframework.http.CacheControl.maxAge(3,java.util.concurrent.TimeUnit.SECONDS).cachePublic()).body(site);
     }
-    @GetMapping("/runtime")Map<String,Object> runtime(){return Map.of("developmentLogin",auth.local,"customerTemplateId",wx.customerTemplate,"customerReminderTemplateId",wx.customerReminderTemplate,"customerTemplateIds",wx.customerTemplates(),"customerServiceEnabled",true,"wechatLoginConfigured",!wx.appId.isBlank()&&!wx.secret.isBlank(),"independentStoreServices",true,"customerProfiles",true);}
+    @GetMapping("/runtime")Map<String,Object> runtime(){return Map.of("developmentLogin",auth.local,"customerTemplateId",wx.customerTemplate,"customerReminderTemplateId",wx.customerReminderTemplate,"customerTemplateIds",wx.customerTemplates(),"customerServiceEnabled",true,"wechatLoginConfigured",!wx.appId.isBlank()&&!wx.secret.isBlank(),"independentStoreServices",true,"customerProfiles",true,"memberCrossStoreBooking",true,"paymentReservation",true);}
     @PostMapping("/auth/wechat")Map<String,Object> wechat(@RequestBody Map<String,Object> in){return auth.customerSession(wx.login(text(in,"code",1,200)),false);}
     @PostMapping("/auth/dev-customer")Map<String,Object> local(@RequestBody Map<String,Object> in){if(!auth.local)throw error(404,"接口不存在。");String device=text(in,"deviceId",16,100);if(!device.matches("[A-Za-z0-9_-]+"))throw error(400,"开发身份标识无效。");return auth.customerSession("dev:"+device,true);}
     @GetMapping("/stores/{id}/slots")Map<String,Object> slots(@PathVariable String id,@RequestParam String date){return catalog.slots(id,date);}

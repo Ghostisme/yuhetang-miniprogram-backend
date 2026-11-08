@@ -41,6 +41,10 @@ class CustomerProfiles {
         result.put("phoneVerified",verified);result.put("memberVerified",verified&&bool(profile,"memberVerified"));
         result.put("memberStatus",verified&&bool(profile,"memberVerified")?"MEMBER":"NON_MEMBER");
         result.put("memberGrade",verified?str(profile,"memberGrade"):"");
+        String home=verified&&bool(profile,"memberVerified")?str(profile,"originalStoreId"):"";
+        var stores=home.isBlank()?List.<Map<String,Object>>of():d.rows("SELECT id,name FROM store WHERE id=?",home);
+        result.put("memberStoreId",stores.isEmpty()?"":home);result.put("memberStoreName",stores.isEmpty()?"":str(stores.get(0),"name"));
+        result.put("crossStoreBookingSupported",true);
         result.put("sources",pid.isBlank()?List.of("MINIPROGRAM"):sources(d,pid));
         result.put("complete",verified&&!name.isBlank());result.put("firstLoginAt",account.get("firstLoginAt"));
         result.put("lastLoginAt",account.get("lastLoginAt"));result.put("development",bool(account,"isDevelopment"));

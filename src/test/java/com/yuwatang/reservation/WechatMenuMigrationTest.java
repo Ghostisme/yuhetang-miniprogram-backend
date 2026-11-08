@@ -22,7 +22,8 @@ class WechatMenuMigrationTest {
         Flyway.configure().dataSource(source).locations("classpath:db/migration").load().migrate();
         assertEquals(3,d.count("SELECT COUNT(*) FROM role_permission WHERE role_id='hq' AND permission_code LIKE 'wechat-menu:%'"));
         assertEquals(1,d.count("SELECT COUNT(*) FROM role_permission WHERE role_id='custom-global'"));
-        assertEquals(1,d.count("SELECT COUNT(*) FROM role_permission WHERE role_id='manager'"));
+        assertEquals(0,d.count("SELECT COUNT(*) FROM role_permission WHERE role_id='manager' AND permission_code LIKE 'wechat-menu:%'"));
+        assertEquals(1,d.count("SELECT COUNT(*) FROM role_permission WHERE role_id='manager' AND permission_code='legacy:read'"));
         assertEquals(3,d.count("SELECT COUNT(*) FROM role_permission WHERE permission_code='legacy:read'"));
         assertEquals("原有配置",d.one("SELECT * FROM app_setting WHERE setting_key='keep-config'").get("settingValue"));
         assertEquals(0,Data.integer(d.one("SELECT * FROM wechat_service_menu"),"revision",-1));

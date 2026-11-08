@@ -23,6 +23,8 @@ final class RbacPolicy {
         Map.entry("appointments:status",List.of("appointments:read")),
         Map.entry("appointments:phone",List.of("appointments:read")),
         Map.entry("appointments:export",List.of("appointments:read")),
+        Map.entry("payments:read",List.of("appointments:read")),
+        Map.entry("payments:write",List.of("payments:read","appointments:read")),
         Map.entry("customers:write",List.of("customers:read")),
         Map.entry("customers:master",List.of("customers:read")),
         Map.entry("customers:shared",List.of("customers:read")),

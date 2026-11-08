@@ -11,9 +11,10 @@ import static com.yuwatang.reservation.Data.*;
 @Service
 public class BookingService {
     final Data d;final CatalogService catalog;final NotificationService notifications;final RescheduleRequests reschedules;
+    final MemberBookings members;final PaymentReservations payments;
     static final Set<String> ACTIVE=Set.of("PENDING","CONFIRMED","ARRIVED");
     static final Map<String,String> LABELS=Map.of("PENDING","待门店确认","CONFIRMED","门店已确认","ARRIVED","已到店","COMPLETED","已完成","CANCELLED","已取消","NO_SHOW","未到店");
-    BookingService(Data d,CatalogService c,NotificationService n){this.d=d;catalog=c;notifications=n;reschedules=new RescheduleRequests(d,c);}
+    BookingService(Data d,CatalogService c,NotificationService n,MemberBookings members,PaymentReservations payments){this.d=d;catalog=c;notifications=n;reschedules=new RescheduleRequests(d,c);this.members=members;this.payments=payments;}
     @Transactional(isolation=Isolation.READ_COMMITTED) public Map<String,Object> create(Map<String,Object> in,String customer,Admin actor,String key){
         if(key==null||!key.matches("[A-Za-z0-9_-]{8,100}"))throw error(400,"缺少有效的重复提交保护标识。");
         String owner=actor==null?"customer:"+customer:"admin:"+actor.id();
@@ -28,7 +29,7 @@ public class BookingService {
         String id="YHT-"+UUID.randomUUID().toString().substring(0,12).replace("-","").toUpperCase(Locale.ROOT),now=now(),status=actor==null?"PENDING":"CONFIRMED",source=actor==null?"MINIPROGRAM":text(in,"source",1,24);if(!Set.of("MINIPROGRAM","PHONE","WECHAT","DIANPING","WALKIN").contains(source))throw error(400,"预约来源不正确。");
         d.update("INSERT INTO appointment(id,customer_id,store_id,service_id,service_name,customer_name,phone,booking_date,start_time,headcount,therapist_intent_id,therapist_intent_name,member_claim,visited_claim,remark,sensitive_consent,status,source,version,created_at,updated_at,idempotency_owner,idempotency_key,request_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",id,customer,store,service,str(srv,"name"),name,phone,date,time,headcount,intent,intentName,member,visited,remark,sensitive,status,source,1,now,now,owner,key,hash);
         history(id,status,actor==null?"申请已提交，等待门店人工确认；具体接待以门店确认为准。":"前台代约并确认",actor==null?"客户本人":actor.name());
-        customerRelation(store,name,phone,source);var record=get(id);if(actor!=null)d.audit(actor,store,"appointment.create",id,"前台代约来源="+source);event(record,"appointment.created");return view(record,actor!=null);
+        customerRelation(store,name,phone,source);members.snapshot(id,customer,actor,phone,store);var record=get(id);payments.initialize(record);if(actor!=null)d.audit(actor,store,"appointment.create",id,"前台代约来源="+source);event(record,"appointment.created");return view(record,actor!=null);
     }
     String claim(Map<String,Object> in,String key){String value=text(in,key,1,12);if(!Set.of("YES","NO","UNKNOWN").contains(value))throw error(400,"请选择是否会员/是否来过门店。");return value;}
     String therapist(String id,String store,String service,boolean intent){
@@ -99,7 +100,7 @@ public class BookingService {
             default->throw error(400,"不支持的预约操作。");
         }
         if(Set.of("cancel","reject","arrive","complete","noshow").contains(action))reschedules.close(b,"CLOSED","原预约已"+LABELS.get(next)+"，改约申请关闭。");
-        if(d.update("UPDATE appointment SET status=?,version=version+1,updated_at=?,cancel_reason=? WHERE id=? AND version=?",next,now(),next.equals("CANCELLED")?note:b.get("cancelReason"),id,version)!=1)throw error(409,"预约已更新，请刷新。");history(id,next,note.isBlank()?LABELS.get(next):note,operator);var updated=get(id);if(actor!=null)d.audit(actor,store,"appointment."+action,id,"版本="+(version+1));if(!Set.of("note","assign").contains(action))event(updated,action.equals("reschedule")&&actor==null?"appointment.reschedule_requested":"appointment."+action);else if(action.equals("assign"))pmsEvent(updated,"appointment.assign");return view(updated,actor!=null);
+        if(d.update("UPDATE appointment SET status=?,version=version+1,updated_at=?,cancel_reason=? WHERE id=? AND version=?",next,now(),next.equals("CANCELLED")?note:b.get("cancelReason"),id,version)!=1)throw error(409,"预约已更新，请刷新。");history(id,next,note.isBlank()?LABELS.get(next):note,operator);var updated=get(id);payments.appointmentChanged(b,updated);if(actor!=null)d.audit(actor,store,"appointment."+action,id,"版本="+(version+1));if(!Set.of("note","assign").contains(action))event(updated,action.equals("reschedule")&&actor==null?"appointment.reschedule_requested":"appointment."+action);else if(action.equals("assign"))pmsEvent(updated,"appointment.assign");return view(updated,actor!=null);
     }
     @Transactional(isolation=Isolation.READ_COMMITTED) public void expireReschedule(String id){
         var initial=d.rows("SELECT * FROM appointment WHERE id=?",id);if(initial.isEmpty())return;
@@ -142,8 +143,11 @@ public class BookingService {
         Map<String,List<Map<String,Object>>> histories=new HashMap<>();var ids=rows.stream().map(b->b.get("id")).toList();String placeholders=String.join(",",Collections.nCopies(ids.size(),"?"));
         if(admin)for(var row:d.rows("SELECT * FROM appointment_history WHERE appointment_id IN ("+placeholders+") ORDER BY created_at DESC,id DESC",ids.toArray()))histories.computeIfAbsent(str(row,"appointmentId"),k->new ArrayList<>()).add(row);
         for(var row:d.rows("SELECT * FROM appointment_reschedule WHERE appointment_id IN ("+placeholders+") ORDER BY request_version DESC",ids.toArray()))requests.putIfAbsent(str(row,"appointmentId"),row);
-        var current=OffsetDateTime.now(ZONE);
-        return rows.stream().map(b->view(b,admin,stores.get(str(b,"storeId")),therapists.get(str(b,"assignedTherapistId")),histories.getOrDefault(str(b,"id"),List.of()),rules.get(str(b,"storeId")),requests.getOrDefault(str(b,"id"),Map.of()),current)).toList();
+        var memberships=members.views(ids,stores);var settlement=admin?Map.<String,Map<String,Object>>of():payments.views(ids);var current=OffsetDateTime.now(ZONE);
+        return rows.stream().map(b->{
+            var v=view(b,admin,stores.get(str(b,"storeId")),therapists.get(str(b,"assignedTherapistId")),histories.getOrDefault(str(b,"id"),List.of()),rules.get(str(b,"storeId")),requests.getOrDefault(str(b,"id"),Map.of()),current);
+            v.put("membership",memberships.get(str(b,"id")));if(!admin)v.put("payment",settlement.get(str(b,"id")));return v;
+        }).toList();
     }
     List<Map<String,Object>> mine(String customer){return views(d.rows("SELECT * FROM appointment WHERE customer_id=? ORDER BY created_at DESC LIMIT 100",customer),false);}
     static String mask(String p){return p.length()==11?p.substring(0,3)+"****"+p.substring(7):"";}
