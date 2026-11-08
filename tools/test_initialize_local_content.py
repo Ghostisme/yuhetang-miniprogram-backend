@@ -27,7 +27,7 @@ class FakeApi:
         self.stores = [dict(id=s["id"], name=s["name"], catalogMode="INDEPENDENT", address="真实地址", image="/uploads/official.jpg")
                        for s in data["stores"]]
         self.services = {s["id"]: [dict(id="svc-" + s["id"] + "-" + key, name=value["name"], english=value["english"],
-                                       source="STORE", enabled=True) for key, value in data["skillDefinitions"].items()
+                                       source="STORE", storeId=s["id"], enabled=True) for key, value in data["skillDefinitions"].items()
                                       if s["id"] != "meihua" or key != "foot"] for s in data["stores"]}
         self.rules = {s["id"]: dict(opens="09:00", capacity=6) for s in data["stores"]}
         self.teachers, self.assets, self.bodies, self.writes = [], [], {}, []
@@ -153,6 +153,20 @@ class LocalContentTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "independent branch"):
             self.run_import(api)
         self.assertFalse(api.writes)
+
+    def test_samples_cover_new_active_branch_projects_without_enabling_pending_items(self):
+        api = FakeApi(self.data)
+        api.services["shanghai"].extend([
+            dict(id="svc-shanghai-symptom", name="对症调理", source="STORE", storeId="shanghai", enabled=True),
+            dict(id="svc-shanghai-package", name="A套餐", source="STORE", storeId="shanghai", enabled=True),
+            dict(id="svc-shanghai-pending", name="待确认品项", source="STORE", storeId="shanghai", enabled=False),
+        ])
+        self.run_import(api)
+        for teacher in api.teachers:
+            expected = {s["id"] for s in api.services[teacher["storeId"]] if s["enabled"]}
+            self.assertEqual(expected, set(teacher["serviceIds"]))
+            self.assertTrue(teacher["sample"])
+            self.assertIn("示例", teacher["name"])
 
     def test_previously_imported_staff_renamed_or_promoted_are_not_overwritten(self):
         api = FakeApi(self.data)

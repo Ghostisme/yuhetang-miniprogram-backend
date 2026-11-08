@@ -159,6 +159,11 @@ def therapist_payload(source, store_id, services, definitions, image):
             raise ValueError("Ambiguous branch skill: " + store_id + "/" + key)
         if matches:
             skills.append(matches[0]["id"])
+    # These explicitly labelled samples cover the current branch catalog for testing.
+    # Genuine staff skills remain operator-managed; existing staff are never overwritten.
+    skills = list(dict.fromkeys(skills + [s["id"] for s in services
+                                        if s.get("source") == "STORE" and s.get("enabled") is True
+                                        and s.get("storeId", store_id) == store_id]))
     if not skills:
         raise ValueError("No matching active branch skill for sample: " + source["id"])
     result = {k: copy.deepcopy(source[k]) for k in
