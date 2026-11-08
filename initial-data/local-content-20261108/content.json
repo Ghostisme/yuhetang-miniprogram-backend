@@ -1,0 +1,1042 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "local-content-20261108",
+  "capturedAt": "2026-11-08T05:08:44.832142+00:00",
+  "source": "current-local-admin-api",
+  "policy": "fill-missing-only; preserve-existing-rows; labelled-sample-therapists",
+  "excluded": [
+    "storeProfiles",
+    "branchServices",
+    "branchMenuImages",
+    "bookingRules",
+    "customers",
+    "appointments",
+    "conversations",
+    "accounts",
+    "roles",
+    "tokens",
+    "notificationConfiguration"
+  ],
+  "content": {
+    "brandName": "裕和堂",
+    "brandEnglish": "YU HE TANG",
+    "tagline": "身心有度，日常有和",
+    "theme": "sage",
+    "hero": {
+      "eyebrow": "东方养护 · 城市慢生活",
+      "title": "留一段时间\n好好照顾自己",
+      "subtitle": "让身体慢下来，让日常多一分从容。",
+      "image": "/media/store-08.webp",
+      "button": "预约一段好时光"
+    },
+    "brandStory": "我们相信，好的养护是日常里的细心关照。以一缕艾香、一盏清茶、一双温暖的手，让熟悉的东方养生，成为当代生活里自在的一部分。",
+    "contact": {
+      "phone": "",
+      "wechat": "",
+      "message": "留下您的预约意向，门店养护老师将与您联系。"
+    },
+    "sections": [
+      {
+        "id": "services",
+        "name": "特色养护",
+        "enabled": true
+      },
+      {
+        "id": "space",
+        "name": "一店一境",
+        "enabled": true
+      },
+      {
+        "id": "products",
+        "name": "东方好物",
+        "enabled": true
+      },
+      {
+        "id": "brand",
+        "name": "关于裕和堂",
+        "enabled": true
+      }
+    ],
+    "services": [
+      {
+        "id": "moxa",
+        "name": "蕲艾温养",
+        "english": "WARMTH OF MUGWORT",
+        "subtitle": "一缕艾香，把温暖留给自己",
+        "category": "艾灸温养",
+        "duration": "60分钟",
+        "image": "/media/moxa.webp",
+        "tag": "招牌养护",
+        "enabled": true,
+        "description": "以温润的艾香开启一段安静时光。到店后由养护老师了解您的日常习惯与体验偏好，沟通适合的服务方式。",
+        "steps": [
+          "一盏暖茶 · 轻声问候",
+          "到店沟通 · 了解偏好",
+          "蕲艾温养 · 静享时光",
+          "日常建议 · 从容离店"
+        ]
+      },
+      {
+        "id": "massage",
+        "name": "经络舒缓",
+        "english": "A MOMENT OF RELEASE",
+        "subtitle": "放下紧绷，找回身体的节奏",
+        "category": "经络舒缓",
+        "duration": "60分钟",
+        "image": "/media/massage.webp",
+        "tag": "人气体验",
+        "enabled": true,
+        "description": "以细致的手法与舒适的节奏，陪您从忙碌中慢下来。服务前充分沟通关注部位、力度与体验偏好。",
+        "steps": [
+          "服务前沟通",
+          "舒适度确认",
+          "手法舒缓体验",
+          "离店关怀"
+        ]
+      },
+      {
+        "id": "foot",
+        "name": "足下轻盈",
+        "english": "LIGHTNESS IN EVERY STEP",
+        "subtitle": "照顾走过许多路的自己",
+        "category": "足部养护",
+        "duration": "45分钟",
+        "image": "/media/foot.webp",
+        "tag": "日常放松",
+        "enabled": true,
+        "description": "把片刻宁静留给双足。在安静的空间中，享受从容的足部养护时光。具体体验内容由到店老师沟通确认。",
+        "steps": [
+          "温茶迎客",
+          "足部舒缓",
+          "力度沟通",
+          "日常养护建议"
+        ]
+      },
+      {
+        "id": "guasha",
+        "name": "东方刮痧",
+        "english": "TRADITION MEETS CARE",
+        "subtitle": "传统手法里的细腻关照",
+        "category": "经络舒缓",
+        "duration": "40分钟",
+        "image": "/media/guasha.webp",
+        "tag": "东方手法",
+        "enabled": true,
+        "description": "用一段专注的时间感受传统养护。体验前由老师沟通个人情况及注意事项，以舒适、适合的方式开展服务。",
+        "steps": [
+          "需求与情况沟通",
+          "体验方式确认",
+          "传统手法养护",
+          "体验后关怀"
+        ]
+      }
+    ],
+    "products": [
+      {
+        "id": "aged-moxa",
+        "name": "蕲春陈艾",
+        "subtitle": "一株好艾，一份温润",
+        "image": "/media/moxa-product.webp",
+        "category": "草本本源",
+        "description": "从湖北蕲春的艾田到门店日常，感受草本的本真气息。产品信息与具体使用方式，请向门店老师了解。",
+        "enabled": true
+      },
+      {
+        "id": "herbal-daily",
+        "name": "草本日常",
+        "subtitle": "把自然，带回生活",
+        "image": "/media/herbal.webp",
+        "category": "日常养护",
+        "description": "让细致的关照成为日常。展示内容供品牌体验演示，具体品类与信息以门店确认为准。",
+        "enabled": true
+      }
+    ],
+    "galleryGroups": [
+      {
+        "id": "welcome",
+        "name": "迎客与茶席",
+        "images": [
+          "/media/store-08.webp",
+          "/media/store-07.webp",
+          "/media/store-02.webp"
+        ]
+      },
+      {
+        "id": "quiet",
+        "name": "静养与休憩",
+        "images": [
+          "/media/store-01.webp",
+          "/media/store-06.webp",
+          "/media/store-10.webp",
+          "/media/store-03.webp"
+        ]
+      }
+    ]
+  },
+  "assets": [
+    {
+      "id": "store-01",
+      "url": "/media/store-01.webp",
+      "title": "梅花路店",
+      "category": "空间",
+      "file": "media/store-01.webp",
+      "bytes": 70280,
+      "sha256": "6425ff3a6b1c15190771ba35a6db5badba3f543d56f81c0697a3877df43d7196"
+    },
+    {
+      "id": "store-02",
+      "url": "/media/store-02.webp",
+      "title": "上海中心一店",
+      "category": "空间",
+      "file": "media/store-02.webp",
+      "bytes": 90480,
+      "sha256": "e193ebc18dfde7005f641169574e71e376510822a8e7e76a5286dc8a2b65dcaa"
+    },
+    {
+      "id": "store-03",
+      "url": "/media/store-03.webp",
+      "title": "上海中心二店",
+      "category": "空间",
+      "file": "media/store-03.webp",
+      "bytes": 41206,
+      "sha256": "9667bfb5240abf142bd66dc5732b05ea7bf77462923bcd14fe855875411817d1"
+    },
+    {
+      "id": "store-04",
+      "url": "/media/store-04.webp",
+      "title": "吴江路店",
+      "category": "空间",
+      "file": "media/store-04.webp",
+      "bytes": 83566,
+      "sha256": "ff82c6f7ce1c8428f577f1588fa67c8e876c492b15b1bafd3b586d96d7bab448"
+    },
+    {
+      "id": "store-05",
+      "url": "/media/store-05.webp",
+      "title": "华山路店",
+      "category": "空间",
+      "file": "media/store-05.webp",
+      "bytes": 71010,
+      "sha256": "9355f5e01fcced48469de7fd87733c79c087fe9e6c2881a18dba026d846b1849"
+    },
+    {
+      "id": "store-06",
+      "url": "/media/store-06.webp",
+      "title": "四川北路店",
+      "category": "空间",
+      "file": "media/store-06.webp",
+      "bytes": 78608,
+      "sha256": "a2fcaf38f967344d7abd3bbe1761f5e5ea692c47d7ac27dab478eb7272508afe"
+    },
+    {
+      "id": "store-07",
+      "url": "/media/store-07.webp",
+      "title": "常德路店",
+      "category": "空间",
+      "file": "media/store-07.webp",
+      "bytes": 101758,
+      "sha256": "157bc7cba07ec40f71717131801cb8ca55b4ed4c8f799cb88509ac6b44848dfc"
+    },
+    {
+      "id": "store-08",
+      "url": "/media/store-08.webp",
+      "title": "百乐门店",
+      "category": "空间",
+      "file": "media/store-08.webp",
+      "bytes": 94590,
+      "sha256": "ec812d1ab6f5f0a69059458fdeb14ee1e905b94372657efb8758f69ed2618b56"
+    },
+    {
+      "id": "store-09",
+      "url": "/media/store-09.webp",
+      "title": "太古汇店",
+      "category": "空间",
+      "file": "media/store-09.webp",
+      "bytes": 150686,
+      "sha256": "e63827fdf2080f3585222e135d7b18498748547a596595b73164b8d97903202b"
+    },
+    {
+      "id": "store-10",
+      "url": "/media/store-10.webp",
+      "title": "余姚路店",
+      "category": "空间",
+      "file": "media/store-10.webp",
+      "bytes": 133730,
+      "sha256": "6ce734a7a0ff201dfd6dffa34b2b5a7a9d529f312a8d5f0107b57775d5cf5f48"
+    },
+    {
+      "id": "store-01-alt",
+      "url": "/media/store-01-alt.webp",
+      "title": "梅花路店 · 空间",
+      "category": "空间",
+      "file": "media/store-01-alt.webp",
+      "bytes": 57662,
+      "sha256": "a107626b74d2b83aeb6abca8f9ab0b5f7982cfec080d5acad23d9d20685c11d9"
+    },
+    {
+      "id": "store-02-alt",
+      "url": "/media/store-02-alt.webp",
+      "title": "上海中心一店 · 空间",
+      "category": "空间",
+      "file": "media/store-02-alt.webp",
+      "bytes": 104118,
+      "sha256": "8ddc8c08ef269d148e158f7c2d2aed93a81f642f330514f5f6c4d1d3fd62ae56"
+    },
+    {
+      "id": "store-03-alt",
+      "url": "/media/store-03-alt.webp",
+      "title": "上海中心二店 · 空间",
+      "category": "空间",
+      "file": "media/store-03-alt.webp",
+      "bytes": 79614,
+      "sha256": "228d4d69196a7ec7cb58f9cbd6f7f1aad5cd26350d2ec1e2e9d1ebb9d7167f26"
+    },
+    {
+      "id": "store-04-alt",
+      "url": "/media/store-04-alt.webp",
+      "title": "吴江路店 · 空间",
+      "category": "空间",
+      "file": "media/store-04-alt.webp",
+      "bytes": 69606,
+      "sha256": "9f08b48285cf81037fda4f069e8a885516e748aac4c97dcdd992f109fdd851c1"
+    },
+    {
+      "id": "store-05-alt",
+      "url": "/media/store-05-alt.webp",
+      "title": "华山路店 · 空间",
+      "category": "空间",
+      "file": "media/store-05-alt.webp",
+      "bytes": 36972,
+      "sha256": "993966c19dbf5df91730896906efada4423ad1e47bd7cf210c0ed58d0a418b23"
+    },
+    {
+      "id": "store-06-alt",
+      "url": "/media/store-06-alt.webp",
+      "title": "四川北路店 · 空间",
+      "category": "空间",
+      "file": "media/store-06-alt.webp",
+      "bytes": 43614,
+      "sha256": "d32615cde7af1f2e825c003c619c03ef9a4726e1ecc1b9a3544c0e0993b40c7f"
+    },
+    {
+      "id": "store-07-alt",
+      "url": "/media/store-07-alt.webp",
+      "title": "常德路店 · 空间",
+      "category": "空间",
+      "file": "media/store-07-alt.webp",
+      "bytes": 73128,
+      "sha256": "875e54c0596b24a90ac32da8828701e9ea3c4aee475cf7a005781512f40d2f36"
+    },
+    {
+      "id": "store-08-alt",
+      "url": "/media/store-08-alt.webp",
+      "title": "百乐门店 · 空间",
+      "category": "空间",
+      "file": "media/store-08-alt.webp",
+      "bytes": 90100,
+      "sha256": "9edc42571dbe9ac923bb9f528a0b4e5807eab8152cae1223c69c6c7f767002aa"
+    },
+    {
+      "id": "store-09-alt",
+      "url": "/media/store-09-alt.webp",
+      "title": "太古汇店 · 空间",
+      "category": "空间",
+      "file": "media/store-09-alt.webp",
+      "bytes": 165310,
+      "sha256": "cd1c1b1bbfb8029750b72635f7a0b0158e24a5826550d746fcc7421fe15c43f7"
+    },
+    {
+      "id": "store-10-alt",
+      "url": "/media/store-10-alt.webp",
+      "title": "余姚路店 · 空间",
+      "category": "空间",
+      "file": "media/store-10-alt.webp",
+      "bytes": 133964,
+      "sha256": "907fe56630f95e2eb88bc4f7001d3c55f270aec90dd7b84ec87cf6aba3dd44f5"
+    },
+    {
+      "id": "space-08-full",
+      "url": "/media/space-08-full.webp",
+      "title": "百乐门店 · 原景",
+      "category": "空间",
+      "file": "media/space-08-full.webp",
+      "bytes": 182140,
+      "sha256": "b737715ba21659e85f2ca7b5b013953c8c64a30f9f17bccc7c22c22ae9c98adf"
+    },
+    {
+      "id": "space-06-full",
+      "url": "/media/space-06-full.webp",
+      "title": "四川北路店 · 原景",
+      "category": "空间",
+      "file": "media/space-06-full.webp",
+      "bytes": 159100,
+      "sha256": "5f1a30fa366808bfb34d56354298cb733b24543d77be79b9a3ecdc7e9349b29c"
+    },
+    {
+      "id": "space-07-full",
+      "url": "/media/space-07-full.webp",
+      "title": "常德路店 · 原景",
+      "category": "空间",
+      "file": "media/space-07-full.webp",
+      "bytes": 199752,
+      "sha256": "188d653983a35537a92d18c8fa45219e46a6e854fc32b51146c1a2034bd61bb5"
+    },
+    {
+      "id": "moxa",
+      "url": "/media/moxa.webp",
+      "title": "艾灸养护",
+      "category": "养护",
+      "file": "media/moxa.webp",
+      "bytes": 13352,
+      "sha256": "72ce1a08d4ce3d9a7608b37f153fe17acb5670177981fe618760eaa6940bec21"
+    },
+    {
+      "id": "massage",
+      "url": "/media/massage.webp",
+      "title": "经络舒缓",
+      "category": "养护",
+      "file": "media/massage.webp",
+      "bytes": 11040,
+      "sha256": "241a48434f1e21d2e2a9a630e85d6670e7d33ba85aac568aff972760a43b83b6"
+    },
+    {
+      "id": "foot",
+      "url": "/media/foot.webp",
+      "title": "足部养护",
+      "category": "养护",
+      "file": "media/foot.webp",
+      "bytes": 10022,
+      "sha256": "586ca0c3c791982bb13c7738ab90a884047585362b665e173fe4f13ecf44af7b"
+    },
+    {
+      "id": "guasha",
+      "url": "/media/guasha.webp",
+      "title": "东方刮痧",
+      "category": "养护",
+      "file": "media/guasha.webp",
+      "bytes": 12848,
+      "sha256": "d02576e31139bd530822d9efa738a9797ab7f0aebf60812e775bb1b0514365b1"
+    },
+    {
+      "id": "ritual",
+      "url": "/media/ritual.webp",
+      "title": "手作温度",
+      "category": "养护",
+      "file": "media/ritual.webp",
+      "bytes": 30500,
+      "sha256": "ce216f585ad23051e88a40de4d48b9b142042e301ba3d8e4c15ac8f75d93feaf"
+    },
+    {
+      "id": "tea",
+      "url": "/media/tea.webp",
+      "title": "一盏清茶",
+      "category": "好物",
+      "file": "media/tea.webp",
+      "bytes": 101798,
+      "sha256": "3086d00dbecadc801c88e5d35e558c24c3f45527d7076d4c48c25634b7e200d5"
+    },
+    {
+      "id": "herb-field",
+      "url": "/media/herb-field.webp",
+      "title": "蕲春艾田",
+      "category": "好物",
+      "file": "media/herb-field.webp",
+      "bytes": 109604,
+      "sha256": "179c95c7cf8e1307090ea19f094de7d07c2d5bf84b284a76c00b591e359fb2d9"
+    },
+    {
+      "id": "herbal",
+      "url": "/media/herbal.webp",
+      "title": "草本日常",
+      "category": "好物",
+      "file": "media/herbal.webp",
+      "bytes": 121844,
+      "sha256": "7a82514d3d64b90fb6735bb2f991c1ed957cc705eae101ffa26f32ed08ffaa5a"
+    },
+    {
+      "id": "ceremony",
+      "url": "/media/ceremony.webp",
+      "title": "东方器物",
+      "category": "好物",
+      "file": "media/ceremony.webp",
+      "bytes": 43804,
+      "sha256": "4a06e8f60380bc4716aee7ff2457a2e4bc1c16cdb62538dcb0a1bd176aeb3687"
+    },
+    {
+      "id": "moxa-product",
+      "url": "/media/moxa-product.webp",
+      "title": "蕲春陈艾",
+      "category": "好物",
+      "file": "media/moxa-product.webp",
+      "bytes": 33628,
+      "sha256": "cc995cda9422f828f87a11905a6a21fc2bfb7f530beeded23ad735701e33375f"
+    }
+  ],
+  "stores": [
+    {
+      "id": "bai-le-men",
+      "name": "百乐门店",
+      "aliases": []
+    },
+    {
+      "id": "shanghai",
+      "name": "上海中心店",
+      "aliases": []
+    },
+    {
+      "id": "wujiang",
+      "name": "吴江路店",
+      "aliases": []
+    },
+    {
+      "id": "huashan",
+      "name": "华山路店",
+      "aliases": []
+    },
+    {
+      "id": "taikoo",
+      "name": "太古汇店",
+      "aliases": []
+    },
+    {
+      "id": "meihua",
+      "name": "梅花路店",
+      "aliases": [
+        "梅花路中医诊所"
+      ]
+    },
+    {
+      "id": "sichuan",
+      "name": "四川北路店",
+      "aliases": []
+    },
+    {
+      "id": "changde",
+      "name": "常德路店",
+      "aliases": []
+    },
+    {
+      "id": "yuyao",
+      "name": "余姚路店",
+      "aliases": []
+    }
+  ],
+  "skillDefinitions": {
+    "massage": {
+      "name": "中医推拿",
+      "english": "TCM Massage",
+      "aliases": [
+        "经络舒缓"
+      ]
+    },
+    "moxa": {
+      "name": "扶阳悬灸",
+      "english": "Moxibustion",
+      "aliases": [
+        "蕲艾温养"
+      ]
+    },
+    "foot": {
+      "name": "香薰足疗",
+      "english": "Foot Massage",
+      "aliases": [
+        "足下轻盈"
+      ]
+    },
+    "guasha": {
+      "name": "刮痧",
+      "english": "Skin Scraping",
+      "aliases": [
+        "东方刮痧"
+      ]
+    }
+  },
+  "therapists": [
+    {
+      "id": "shanghai-t3",
+      "storeId": "shanghai",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "shanghai-t1",
+      "storeId": "shanghai",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "shanghai-t2",
+      "storeId": "shanghai",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "yuyao-t3",
+      "storeId": "yuyao",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "yuyao-t1",
+      "storeId": "yuyao",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "yuyao-t2",
+      "storeId": "yuyao",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "huashan-t3",
+      "storeId": "huashan",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "huashan-t1",
+      "storeId": "huashan",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "huashan-t2",
+      "storeId": "huashan",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "wujiang-t3",
+      "storeId": "wujiang",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "wujiang-t1",
+      "storeId": "wujiang",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "wujiang-t2",
+      "storeId": "wujiang",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "sichuan-t3",
+      "storeId": "sichuan",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "sichuan-t1",
+      "storeId": "sichuan",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "sichuan-t2",
+      "storeId": "sichuan",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "taikoo-t3",
+      "storeId": "taikoo",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "taikoo-t1",
+      "storeId": "taikoo",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "taikoo-t2",
+      "storeId": "taikoo",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "changde-t3",
+      "storeId": "changde",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "changde-t1",
+      "storeId": "changde",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "changde-t2",
+      "storeId": "changde",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "meihua-t3",
+      "storeId": "meihua",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "meihua-t1",
+      "storeId": "meihua",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "meihua-t2",
+      "storeId": "meihua",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "bai-le-men-t3",
+      "storeId": "bai-le-men",
+      "name": "周老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "bai-le-men-t1",
+      "storeId": "bai-le-men",
+      "name": "林老师（示例）",
+      "sample": true,
+      "grade": "资深调理师",
+      "specialty": "经络舒缓 · 艾草养护",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    },
+    {
+      "id": "bai-le-men-t2",
+      "storeId": "bai-le-men",
+      "name": "陈老师（示例）",
+      "sample": true,
+      "grade": "调理师",
+      "specialty": "日常养护 · 放松舒展",
+      "image": "/media/ritual.webp",
+      "enabled": true,
+      "showOnClient": true,
+      "resting": false,
+      "skillKeys": [
+        "moxa",
+        "massage",
+        "foot",
+        "guasha"
+      ]
+    }
+  ]
+}
