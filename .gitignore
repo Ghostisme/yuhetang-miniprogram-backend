@@ -24,6 +24,7 @@ target-notifications/
 target-chat-lifecycle/
 target-client-services/
 target-customer-profile/
+target-appointment-changes/
 backups/
 releases/
 __pycache__/

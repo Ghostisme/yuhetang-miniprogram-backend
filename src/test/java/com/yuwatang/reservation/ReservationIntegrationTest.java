@@ -212,14 +212,86 @@ class ReservationIntegrationTest {
         }finally{pool.shutdownNow();}
     }
 
-    @Test void rescheduleIsAtomicAndReturnsToManualReview()throws Exception{
+    @Test void reschedulePreservesConfirmedAppointmentUntilApproval()throws Exception{
         var b=create("11:00","13900001005");String id=str(b,"id");change(id,1,"confirm",manager,Map.of());change(id,2,"assign",manager,Map.of("assignedTherapistId","yuyao-t1"));
         var full=input("11:15","13900001006");full.put("headcount",4);bookings.create(full,customer,null,id());
         json(send(patch("/api/me/appointments/"+id),customerToken,Map.of("version",3,"action","reschedule","date",tomorrow,"startTime","11:15")),409);
         assertEquals("11:00",bookings.get(id).get("startTime"));assertEquals(3,integer(bookings.get(id),"version",0));assertEquals("yuyao-t1",bookings.get(id).get("assignedTherapistId"));
         var next=json(send(patch("/api/me/appointments/"+id),customerToken,Map.of("version",3,"action","reschedule","date",tomorrow,"startTime","11:30")),200);
-        assertEquals("PENDING",next.get("status"));assertNull(next.get("assignedTherapistId"));assertEquals(0,catalog.used("yuyao",tomorrow,"11:00",null));assertEquals(1,catalog.used("yuyao",tomorrow,"11:30",null));
+        assertEquals("CONFIRMED",next.get("status"));assertEquals("11:00",next.get("startTime"));assertEquals("yuyao-t1",next.get("assignedTherapistId"));assertEquals(1,catalog.used("yuyao",tomorrow,"11:00",null));assertEquals(0,catalog.used("yuyao",tomorrow,"11:30",null));
+        assertEquals("PENDING",str(d.object(next.get("rescheduleRequest")),"status"));
+        assertFalse(bool(d.object(next.get("customerActions")),"canReschedule"));
+        json(send(patch("/api/admin/appointments/"+id),manager,Map.of("action","confirm","version",4)),409);
+        json(send(patch("/api/me/appointments/"+id),customerToken,Map.of("version",4,"action","reschedule","date",tomorrow,"startTime","11:45")),409);
+        var approved=change(id,4,"approve_reschedule",manager,Map.of());
+        assertEquals("CONFIRMED",approved.get("status"));assertEquals("11:30",approved.get("startTime"));assertNull(approved.get("assignedTherapistId"));
+        assertEquals("APPROVED",str(d.object(approved.get("rescheduleRequest")),"status"));assertEquals(0,catalog.used("yuyao",tomorrow,"11:00",null));assertEquals(1,catalog.used("yuyao",tomorrow,"11:30",null));
         json(send(patch("/api/admin/appointments/"+id),manager,Map.of("action","confirm","version",3)),409);
+    }
+
+    @Test void elapsedAppointmentsRejectCustomerChangesAndSlotLookupEvenWithZeroHourRule()throws Exception{
+        var b=create("12:00","13900007101");String bid=str(b,"id");change(bid,1,"confirm",manager,Map.of());
+        var rules=Bootstrap.defaultRules();rules.put("cancelHours",0);d.update("UPDATE store SET rules_json=? WHERE id='yuyao'",d.stringify(rules));
+        d.update("UPDATE appointment SET booking_date=?,start_time='00:00' WHERE id=?",LocalDate.now(ZONE).toString(),bid);
+        var current=json(send(get("/api/me/appointments/"+bid),customerToken,null),200);var actions=d.object(current.get("customerActions"));
+        assertFalse(bool(actions,"canCancel"));assertFalse(bool(actions,"canReschedule"));assertTrue(str(actions,"reason").contains("已到预约时间"));
+        for(String action:List.of("cancel","reschedule"))json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",2,"action",action,"date",tomorrow,"startTime","13:00")),409);
+        json(send(get("/api/me/appointments/"+bid+"/slots?date="+tomorrow),customerToken,null),409);
+        assertEquals("CONFIRMED",bookings.get(bid).get("status"));assertEquals(2,bookings.get(bid).get("version"));
+    }
+
+    @Test void rescheduleRejectionAndWithdrawalRetainOriginalAndRequireOwnership()throws Exception{
+        var b=create("12:00","13900007102");String bid=str(b,"id");change(bid,1,"confirm",manager,Map.of());
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",2,"action","reschedule","date",tomorrow,"startTime","13:00")),200);
+        json(send(patch("/api/admin/appointments/"+bid),manager,Map.of("version",3,"action","reject_reschedule")),400);
+        json(send(patch("/api/admin/appointments/"+bid),otherStore,Map.of("version",3,"action","approve_reschedule")),404);
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",3,"action","approve_reschedule")),403);
+        var rejected=change(bid,3,"reject_reschedule",manager,Map.of("note","新时段接待人员不足，请按原时间到店"));
+        assertEquals("REJECTED",str(d.object(rejected.get("rescheduleRequest")),"status"));assertEquals("CONFIRMED",rejected.get("status"));assertEquals("12:00",rejected.get("startTime"));assertEquals(1,catalog.used("yuyao",tomorrow,"12:00",null));
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",4,"action","reschedule","date",tomorrow,"startTime","13:30")),200);
+        String stranger=str(auth.customerSession("withdraw-stranger-"+id(),true),"token");
+        json(send(patch("/api/me/appointments/"+bid),stranger,Map.of("version",5,"action","withdraw_reschedule")),404);
+        var withdrawn=json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",5,"action","withdraw_reschedule")),200);
+        assertEquals("WITHDRAWN",str(d.object(withdrawn.get("rescheduleRequest")),"status"));assertEquals("12:00",withdrawn.get("startTime"));
+        assertEquals(2,d.count("SELECT COUNT(*) FROM appointment_reschedule WHERE appointment_id=?",bid));
+        json(send(patch("/api/admin/appointments/"+bid),manager,Map.of("version",6,"action","approve_reschedule")),409);
+    }
+
+    @Test void approvalRechecksCapacityAndCompetingRequestsCannotOverbook()throws Exception{
+        var first=create("12:00","13900007103");var second=create("12:15","13900007104");
+        for(var b:List.of(first,second)){
+            String bid=str(b,"id");change(bid,1,"confirm",manager,Map.of());
+            json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",2,"action","reschedule","date",tomorrow,"startTime","14:00","headcount",4)),200);
+        }
+        assertEquals(0,catalog.used("yuyao",tomorrow,"14:00",null));
+        var result=json(send(get("/api/admin/appointments?status=RESCHEDULE_PENDING"),manager,null),200);assertEquals(2,integer(result,"total",0));
+        change(str(first,"id"),3,"approve_reschedule",manager,Map.of());
+        json(send(patch("/api/admin/appointments/"+second.get("id")),manager,Map.of("version",3,"action","approve_reschedule")),409);
+        assertEquals(4,catalog.used("yuyao",tomorrow,"14:00",null));assertEquals(1,catalog.used("yuyao",tomorrow,"12:15",null));
+        assertEquals("PENDING",str(new RescheduleRequests(d,catalog).latest(str(second,"id")),"status"));assertEquals(3,integer(bookings.get(str(second,"id")),"version",0));
+        change(str(second,"id"),3,"reject_reschedule",manager,Map.of("note","新时段已满，原预约继续保留"));
+    }
+
+    @Test void expiredRequestsAndCancellationCloseTheLoopWithoutChangingOriginalSlot()throws Exception{
+        var b=create("12:00","13900007105");String bid=str(b,"id");change(bid,1,"confirm",manager,Map.of());
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",2,"action","reschedule","date",tomorrow,"startTime","14:00")),200);
+        d.update("UPDATE appointment_reschedule SET expires_at=? WHERE appointment_id=?",java.time.OffsetDateTime.now(ZONE).minusSeconds(1).toString(),bid);
+        var stale=json(send(get("/api/me/appointments/"+bid),customerToken,null),200);assertEquals("EXPIRED",str(d.object(stale.get("rescheduleRequest")),"status"));
+        json(send(patch("/api/admin/appointments/"+bid),manager,Map.of("version",3,"action","approve_reschedule")),409);
+        bookings.expireReschedule(bid);bookings.expireReschedule(bid);
+        assertEquals(4,integer(bookings.get(bid),"version",0));assertEquals("12:00",str(bookings.get(bid),"startTime"));assertEquals("CONFIRMED",str(bookings.get(bid),"status"));
+        assertEquals(1,d.count("SELECT COUNT(*) FROM pms_outbox WHERE event_type='appointment.expire_reschedule' AND aggregate_id=?",bid));
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",4,"action","reschedule","date",tomorrow,"startTime","14:15")),200);
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",5,"action","cancel")),200);
+        assertEquals("CLOSED",str(new RescheduleRequests(d,catalog).latest(bid),"status"));assertEquals(0,catalog.used("yuyao",tomorrow,"12:00",null));
+        json(send(patch("/api/admin/appointments/"+bid),manager,Map.of("version",6,"action","approve_reschedule")),409);
+    }
+
+    @Test void pendingOriginalIsOnlyConfirmedWhenStaffApprovesNewTime()throws Exception{
+        var b=create("12:00","13900007106");String bid=str(b,"id");
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",1,"action","reschedule","date",tomorrow,"startTime","14:00")),200);
+        json(send(patch("/api/admin/appointments/"+bid),manager,Map.of("version",2,"action","confirm")),409);
+        var approved=change(bid,2,"approve_reschedule",manager,Map.of());assertEquals("CONFIRMED",str(approved,"status"));assertEquals("14:00",str(approved,"startTime"));
     }
 
     @Test void cancellationReleasesQuotaAndNeverAuthenticatesByPhone()throws Exception{
@@ -298,7 +370,7 @@ class ReservationIntegrationTest {
         json(send(put("/api/admin/stores/yuyao/slots"),manager,Map.of("date",tomorrow,"time","11:00","closed",true,"capacity",0)),200);
         var result=json(send(get("/api/me/appointments/"+bid+"/slots?date="+tomorrow),customerToken,null),200);
         assertFalse(bool(catalog.collection(result,"slots").stream().filter(s->"11:00".equals(s.get("time"))).findFirst().orElseThrow(),"available"));
-        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",1,"action","reschedule","date",tomorrow,"startTime","10:00")),200);
+        json(send(patch("/api/me/appointments/"+bid),customerToken,Map.of("version",1,"action","reschedule","date",tomorrow,"startTime","10:00")),400);
         assertEquals(4,catalog.used("yuyao",tomorrow,"10:00",null));
     }
 

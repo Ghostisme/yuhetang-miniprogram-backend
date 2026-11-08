@@ -24,6 +24,6 @@ class PublicApi {
     @PostMapping("/appointments")Map<String,Object> create(HttpServletRequest r,@RequestBody Map<String,Object> body,@RequestHeader(value="Idempotency-Key",required=false)String key){return booking.create(body,auth.customer(r),null,key);}
     @GetMapping("/me/appointments")List<Map<String,Object>> mine(HttpServletRequest r){return booking.mine(auth.customer(r));}
     @GetMapping("/me/appointments/{id}")Map<String,Object> one(HttpServletRequest r,@PathVariable String id){String customer=auth.customer(r);var b=booking.get(id);if(!customer.equals(b.get("customerId")))throw error(404,"预约不存在。");var v=booking.view(b,false);v.put("history",d.rows("SELECT status,created_at FROM appointment_history WHERE appointment_id=? ORDER BY created_at",id));return v;}
-    @GetMapping("/me/appointments/{id}/slots")Map<String,Object> rescheduleSlots(HttpServletRequest r,@PathVariable String id,@RequestParam String date){String customer=auth.customer(r);var b=booking.get(id);if(!customer.equals(b.get("customerId")))throw error(404,"预约不存在。");return catalog.slots(str(b,"storeId"),date,id);}
+    @GetMapping("/me/appointments/{id}/slots")Map<String,Object> rescheduleSlots(HttpServletRequest r,@PathVariable String id,@RequestParam String date){return booking.customerSlots(id,auth.customer(r),date);}
     @PatchMapping("/me/appointments/{id}")Map<String,Object> change(HttpServletRequest r,@PathVariable String id,@RequestBody Map<String,Object> in){return booking.change(id,in,auth.customer(r),null);}
 }

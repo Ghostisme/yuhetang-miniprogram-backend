@@ -22,21 +22,27 @@ public class NotificationService {
         Map.entry("appointment.reject","预约未通过"),Map.entry("appointment.cancel","预约已取消"),
         Map.entry("appointment.reschedule","预约已改期"),Map.entry("appointment.arrive","客户已到店"),
         Map.entry("appointment.complete","接待已完成"),Map.entry("appointment.noshow","客户未到店"),
-        Map.entry("appointment.overdue","预约待确认超时"),Map.entry("appointment.reminder","到店时间提醒"));
-    static final Set<String> CUSTOMER_SMS_EVENTS=Set.of("appointment.confirm","appointment.reject","appointment.cancel","appointment.reschedule","appointment.reminder");
+        Map.entry("appointment.overdue","预约待确认超时"),Map.entry("appointment.reminder","到店时间提醒"),
+        Map.entry("appointment.reschedule_requested","客户改约待处理"),Map.entry("appointment.approve_reschedule","改约已确认"),
+        Map.entry("appointment.reject_reschedule","改约未通过"),Map.entry("appointment.withdraw_reschedule","客户撤回改约"),Map.entry("appointment.expire_reschedule","改约已失效"));
+    static final Set<String> CUSTOMER_SMS_EVENTS=Set.of("appointment.confirm","appointment.reject","appointment.cancel","appointment.reschedule","appointment.reminder","appointment.approve_reschedule","appointment.reject_reschedule","appointment.expire_reschedule");
     // The selected service-account template is a pending-order notice, not a status-change template.
-    static final Set<String> STAFF_WECHAT_EVENTS=Set.of("appointment.created","appointment.overdue");
+    static final Set<String> STAFF_WECHAT_EVENTS=Set.of("appointment.created","appointment.overdue","appointment.reschedule_requested");
     NotificationService(Data d,WechatGateway wx,CatalogService catalog,NotificationChannels channels,SmsGateway sms,PlatformTransactionManager manager){this.d=d;this.wx=wx;this.catalog=catalog;this.channels=channels;this.sms=sms;this.tx=new TransactionTemplate(manager);}
     void enqueue(Map<String,Object> booking,String type){
         String store=str(booking,"storeId"),bid=str(booking,"id"),event=bid+":"+booking.get("version")+":"+type;
         var config=channels.get(store);
-        Map<String,Object> payload=Map.of("appointmentId",bid,"storeName",catalog.store(store).get("name"),"serviceName",booking.get("serviceName"),"customerName",str(booking,"customerName"),"time",booking.get("bookingDate")+" "+booking.get("startTime"),"status",BookingService.LABELS.get(str(booking,"status")),"event",type,"eventLabel",EVENTS.getOrDefault(type,type));
+        Map<String,Object> payload=new LinkedHashMap<>(Map.of("appointmentId",bid,"storeName",catalog.store(store).get("name"),"serviceName",booking.get("serviceName"),"customerName",str(booking,"customerName"),"time",booking.get("bookingDate")+" "+booking.get("startTime"),"status",BookingService.LABELS.get(str(booking,"status")),"event",type,"eventLabel",EVENTS.getOrDefault(type,type)));
+        if(type.equals("appointment.reschedule_requested")){
+            var request=new RescheduleRequests(d,catalog).latest(bid);
+            payload.put("time",str(request,"requestedDate")+" "+str(request,"requestedTime"));payload.put("status","改约待处理");
+        }else if(type.endsWith("_reschedule"))payload.put("status",EVENTS.get(type));
         if(!type.equals("appointment.reminder")){
             if(bool(config,"pcEnabled"))add(event,store,bid,"INBOX",store,0,type,payload,"AVAILABLE","");
             if(bool(config,"wechatStaffEnabled")&&STAFF_WECHAT_EVENTS.contains(type)){
                 var staffPayload=new LinkedHashMap<>(payload);
                 staffPayload.put("customerPhone",str(booking,"phone"));
-                staffPayload.put("staffNotice",(type.equals("appointment.overdue")?"待确认超时·":"新预约待接单·")+payload.get("storeName"));
+                staffPayload.put("staffNotice",(type.equals("appointment.overdue")?"待确认超时·":type.equals("appointment.reschedule_requested")?"改约待处理·":"新预约待接单·")+payload.get("storeName"));
                 var receivers=d.rows("SELECT nr.* FROM notification_recipient nr JOIN app_user u ON nr.admin_user_id=u.id WHERE nr.store_id=? AND nr.enabled=TRUE AND u.enabled=TRUE AND u.store_id=nr.store_id",store);
                 if(receivers.isEmpty())add(event,store,bid,"SERVICE","unbound",0,type,staffPayload,"BLOCKED","本门店尚未绑定微信接收人。");
                 else{var r=receivers.get(0);String openid=str(r,"openid");add(event,store,bid,"SERVICE",str(r,"adminUserId"),integer(r,"generation",0),type,staffPayload,openid.isBlank()?"BLOCKED":"PENDING",openid.isBlank()?"接收人尚未在微信完成确认绑定。":"");}
@@ -99,9 +105,11 @@ public class NotificationService {
         // use that same template, even if the operator changes the current configuration.
         String template=service?wx.serviceTemplate:values.containsKey("subscriptionTemplateId")?str(values,"subscriptionTemplateId"):wx.customerTemplate(str(item,"eventType"));
         if(template.isBlank()){finish(id,"BLOCKED",attempts,"尚未配置匹配的微信消息模板，不代表已发送。");return;}
-        if(service&&!STAFF_WECHAT_EVENTS.contains(str(item,"eventType"))){finish(id,"CANCELLED",attempts,"待接单模板仅用于新预约及待确认超时。");return;}
+        if(service&&!STAFF_WECHAT_EVENTS.contains(str(item,"eventType"))){finish(id,"CANCELLED",attempts,"待办模板仅用于新预约、改约申请及待确认超时。");return;}
         var current=d.rows("SELECT id,version,status FROM appointment WHERE id=?",item.get("appointmentId"));
-        if(current.isEmpty()||!str(item,"eventKey").startsWith(str(current.get(0),"id")+":"+current.get(0).get("version")+":")||service&&!str(current.get(0),"status").equals("PENDING")){
+        boolean rescheduleNotice=str(item,"eventType").equals("appointment.reschedule_requested");
+        boolean waiting=rescheduleNotice?RescheduleRequests.pending(new RescheduleRequests(d,catalog).latest(str(item,"appointmentId")),OffsetDateTime.now(ZONE)):!current.isEmpty()&&str(current.get(0),"status").equals("PENDING");
+        if(current.isEmpty()||!str(item,"eventKey").startsWith(str(current.get(0),"id")+":"+current.get(0).get("version")+":")||service&&!waiting){
             finish(id,"CANCELLED",attempts,service?"预约已处理或更新，停止发送旧待接单提醒。":"预约已有更新，停止发送旧状态订阅消息。");return;
         }
         if(service){var receivers=d.rows("SELECT nr.* FROM notification_recipient nr JOIN app_user u ON nr.admin_user_id=u.id WHERE nr.store_id=? AND nr.enabled=TRUE AND u.enabled=TRUE AND u.store_id=nr.store_id",item.get("storeId"));if(receivers.isEmpty()||integer(receivers.get(0),"generation",0)!=integer(item,"recipientGeneration",0)||!str(receivers.get(0),"adminUserId").equals(str(item,"recipientId"))){finish(id,"CANCELLED",attempts,"接收人已更换或解绑，停止给原人员发送。");return;}target=str(receivers.get(0),"openid");if(target.isBlank()){finish(id,"BLOCKED",attempts,"接收人尚未绑定。");return;}}
