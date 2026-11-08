@@ -7,8 +7,11 @@ import static com.yuwatang.reservation.Data.*;
 final class RbacPolicy {
     private RbacPolicy() {}
     static final Set<String> HEADQUARTERS_ONLY=Set.of("content:write","content:publish","roles:write",
-        "chat:route","customers:master","appointments:export","customers:export","imports:write","integrations:read");
+        "chat:route","customers:master","appointments:export","customers:export","imports:write","integrations:read",
+        "wechat-menu:read","wechat-menu:write","wechat-menu:publish");
     static final Map<String,List<String>> REQUIRES=Map.ofEntries(
+        Map.entry("wechat-menu:write",List.of("wechat-menu:read")),
+        Map.entry("wechat-menu:publish",List.of("wechat-menu:read")),
         Map.entry("services:write",List.of("services:read")),
         Map.entry("content:write",List.of("content:read")),
         Map.entry("content:publish",List.of("content:read")),

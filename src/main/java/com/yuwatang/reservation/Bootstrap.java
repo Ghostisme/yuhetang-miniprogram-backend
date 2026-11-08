@@ -31,6 +31,7 @@ class Bootstrap implements CommandLineRunner {
         d.update("INSERT INTO app_setting VALUES(?,?)",key,d.stringify(mapping));
     }
     static final String[][] PERMISSIONS={
+        {"wechat-menu:read","查看服务号菜单（总部）","服务号菜单"},{"wechat-menu:write","编辑服务号菜单草稿（总部）","服务号菜单"},{"wechat-menu:publish","发布服务号菜单（总部）","服务号菜单"},
         {"services:read","查看本店养护项目","品牌与内容"},{"services:write","维护本店养护项目","品牌与内容"},{"chat:read","查看客户会话","客服"},{"chat:reply","回复客户消息","客服"},{"chat:route","总部客服分流","客服"},
         {"dashboard:read","查看工作台","运营"},{"appointments:read","查看预约","预约"},{"appointments:write","代约与改约","预约"},{"appointments:review","确认与拒绝","预约"},{"appointments:status","到店与完成","预约"},{"appointments:phone","查看完整电话","预约"},{"appointments:export","导出预约","预约"},
         {"content:read","预览品牌内容","品牌与内容"},{"content:write","编辑品牌草稿（总部）","品牌与内容"},{"content:publish","发布品牌内容（总部）","品牌与内容"},{"stores:write","维护门店","门店"},{"rules:write","维护时段规则","门店"},{"therapists:read","查看调理师","人员"},{"therapists:write","维护调理师","人员"},

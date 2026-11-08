@@ -72,7 +72,7 @@ class ProductionBootstrapTest {
         var site=d.object(d.one("SELECT published_json FROM site_config WHERE id='brand'").get("publishedJson"));
         for(String key:List.of("services","stores","products","galleryGroups","assetLibrary"))assertTrue(catalog.collection(site,key).isEmpty(),key);
         assertEquals("",str(site,"brandStory"));assertEquals("",str(d.object(site.get("hero")),"image"));
-        Set<String> systemTables=Set.of("flyway_schema_history","permission","app_role","role_permission","app_user","user_role","site_config","app_setting","booking_guard","job_lease");
+        Set<String> systemTables=Set.of("flyway_schema_history","permission","app_role","role_permission","app_user","user_role","site_config","app_setting","booking_guard","job_lease","wechat_service_menu");
         for(var row:d.rows("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")){
             String table=str(row,"tableName");if(!systemTables.contains(table))assertEquals(0,d.count("SELECT COUNT(*) FROM "+table),table);
         }
