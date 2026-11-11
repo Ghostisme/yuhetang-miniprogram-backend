@@ -38,7 +38,7 @@ class DianpingService implements DianpingPort {
             "batches",d.rows("SELECT * FROM dianping_import_batch ORDER BY created_at DESC,id DESC LIMIT 10"));
     }
     @Transactional public Map<String,Object> saveShop(Admin actor,Map<String,Object> in){
-        actor.require("imports:write");AdminService.hq(actor);catalog.bookingLock();
+        actor.require("integrations:write");AdminService.hq(actor);catalog.bookingLock();
         String external=identifier(in,"externalShopId",false),name=text(in,"externalShopName",1,100),store=text(in,"storeId",1,64);catalog.store(store);
         var old=d.rows("SELECT * FROM dianping_store_mapping WHERE external_shop_id=?",external);int revision=old.isEmpty()?0:integer(old.get(0),"revision",0);
         if(integer(in,"revision",-1)!=revision)throw error(409,"点评门店映射已更新，请刷新后保存。");
@@ -48,7 +48,7 @@ class DianpingService implements DianpingPort {
         d.audit(actor,store,"dianping.shop.map",external,"点评门店映射");return d.one("SELECT * FROM dianping_store_mapping WHERE external_shop_id=?",external);
     }
     @Transactional public Map<String,Object> saveProduct(Admin actor,Map<String,Object> in){
-        actor.require("imports:write");AdminService.hq(actor);catalog.bookingLock();
+        actor.require("integrations:write");AdminService.hq(actor);catalog.bookingLock();
         String external=identifier(in,"externalShopId",false),product=identifier(in,"externalProductId",false),name=text(in,"externalProductName",1,100),service=text(in,"serviceId",1,64);
         String store=str(shop(external),"storeId");localService(store,service);
         var old=d.rows("SELECT * FROM dianping_service_mapping WHERE external_shop_id=? AND external_product_id=?",external,product);int revision=old.isEmpty()?0:integer(old.get(0),"revision",0);

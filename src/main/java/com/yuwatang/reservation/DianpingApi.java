@@ -13,8 +13,8 @@ class DianpingApi {
     final AuthService auth;final DianpingService service;final DianpingPort port;final FilesApi files;
     DianpingApi(AuthService auth,DianpingService service,DianpingPort port,FilesApi files){this.auth=auth;this.service=service;this.port=port;this.files=files;}
     @GetMapping("/config") @Permit("integrations:read")Map<String,Object> config(HttpServletRequest r){return service.config(auth.admin(r));}
-    @PutMapping("/shops") @Permit("imports:write")Map<String,Object> shop(HttpServletRequest r,@RequestBody Map<String,Object> in){return service.saveShop(auth.admin(r),in);}
-    @PutMapping("/products") @Permit("imports:write")Map<String,Object> product(HttpServletRequest r,@RequestBody Map<String,Object> in){return service.saveProduct(auth.admin(r),in);}
+    @PutMapping("/shops") @Permit("integrations:write")Map<String,Object> shop(HttpServletRequest r,@RequestBody Map<String,Object> in){return service.saveShop(auth.admin(r),in);}
+    @PutMapping("/products") @Permit("integrations:write")Map<String,Object> product(HttpServletRequest r,@RequestBody Map<String,Object> in){return service.saveProduct(auth.admin(r),in);}
     @GetMapping("/imports/{kind}/template") @Permit("imports:write")ResponseEntity<byte[]> template(HttpServletRequest r,@PathVariable String kind)throws IOException{
         AdminService.hq(auth.admin(r));return files.workbook("裕和堂-大众点评-"+kind+"-模板.xlsx",DianpingService.headers(DianpingService.kind(kind)),List.of());
     }

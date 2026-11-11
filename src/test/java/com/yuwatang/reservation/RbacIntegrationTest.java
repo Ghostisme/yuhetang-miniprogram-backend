@@ -156,11 +156,67 @@ class RbacIntegrationTest {
         json(send(put("/api/admin/roles"),hq,role(second,"GLOBAL",List.of("services:read"))),409);
     }
 
+    @Test void extensionConfigurationSeparatesVisibilityFromMaintenanceAndRoleAdministration()throws Exception{
+        String roleAdmin=token(newUser("",newRole("GLOBAL","roles:write")));
+        String reader=token(newUser("",newRole("GLOBAL","integrations:read","imports:write")));
+        String maintainer=token(newUser("",newRole("GLOBAL","integrations:write")));
+        for(String path:List.of("/api/admin/integrations","/api/admin/settings","/api/admin/launch-mode","/api/admin/dianping/config")){
+            json(send(get(path),roleAdmin,null),403);
+            json(send(get(path),reader,null),200);
+            json(send(get(path),maintainer,null),200);
+        }
+        var setting=Map.of("sharedLookupEnabled",false);
+        for(String restricted:List.of(roleAdmin,reader)){
+            json(send(put("/api/admin/settings"),restricted,setting),403);
+            json(send(put("/api/admin/launch-mode"),restricted,Map.of()),403);
+            json(send(put("/api/admin/dianping/shops"),restricted,Map.of()),403);
+            json(send(put("/api/admin/dianping/products"),restricted,Map.of()),403);
+        }
+        var me=json(send(get("/api/admin/me"),maintainer,null),200);
+        assertTrue(d.strings(me.get("permissions")).containsAll(List.of("integrations:read","integrations:write")));
+        assertFalse(d.strings(me.get("permissions")).contains("roles:write"));
+        json(send(put("/api/admin/settings"),maintainer,setting),200);
+        var launch=json(send(get("/api/admin/launch-mode"),maintainer,null),200);
+        launch.put("enabled",false);
+        json(send(put("/api/admin/launch-mode"),maintainer,launch),200);
+        String external="rbac-extension-"+id();
+        json(send(put("/api/admin/dianping/shops"),maintainer,Map.of("externalShopId",external,"externalShopName","测试映射","storeId","yuyao","revision",0)),200);
+        String service=str(catalog.storeServices("yuyao",false).get(0),"id");
+        json(send(put("/api/admin/dianping/products"),maintainer,Map.of("externalShopId",external,"externalProductId","fixture","externalProductName","测试项目","serviceId",service,"revision",0)),200);
+        json(send(put("/api/admin/roles"),maintainer,Map.of()),403);
+        body(send(get("/api/admin/dianping/imports/orders/template"),maintainer,null),403);
+    }
+
+    @Test void revokedExtensionPermissionsStayRevokedAndInvalidateExistingSessions()throws Exception{
+        String roleId=newRole("GLOBAL","integrations:write"),user=newUser("",roleId),old=token(user);
+        json(send(get("/api/admin/settings"),old,null),200);
+        json(send(put("/api/admin/roles"),hq,role(roleId,"GLOBAL",List.of("dashboard:read"))),200);
+        json(send(get("/api/admin/me"),old,null),401);
+        bootstrap.run();
+        String fresh=token(user);
+        json(send(get("/api/admin/settings"),fresh,null),403);
+        json(send(put("/api/admin/settings"),fresh,Map.of("sharedLookupEnabled",true)),403);
+        assertFalse(d.strings(json(send(get("/api/admin/me"),fresh,null),200).get("permissions")).contains("integrations:read"));
+    }
+
+    @Test void branchScopeCannotUseConfigurationEvenWithLegacyMalformedPermissions()throws Exception{
+        for(String permission:List.of("integrations:read","integrations:write"))
+            d.update("INSERT INTO role_permission VALUES('manager',?)",permission);
+        String manager=token("yuyao-manager");
+        for(String path:List.of("/api/admin/integrations","/api/admin/settings","/api/admin/launch-mode","/api/admin/dianping/config"))
+            json(send(get(path),manager,null),403);
+        for(String path:List.of("/api/admin/settings","/api/admin/launch-mode","/api/admin/dianping/shops","/api/admin/dianping/products"))
+            json(send(put(path),manager,Map.of()),403);
+    }
+
     @Test void permissionCatalogExplainsContentModuleScopeAndDependencies()throws Exception{
         var all=list(send(get("/api/admin/permissions"),hq,null));
         var write=all.stream().filter(p->"services:write".equals(p.get("code"))).findFirst().orElseThrow();
         assertEquals("品牌与内容",write.get("module"));assertEquals(List.of("services:read"),write.get("requires"));assertFalse(bool(write,"headquartersOnly"));
         var publish=all.stream().filter(p->"content:publish".equals(p.get("code"))).findFirst().orElseThrow();
         assertTrue(bool(publish,"headquartersOnly"));assertEquals(List.of("content:read"),publish.get("requires"));
+        var extension=all.stream().filter(p->"integrations:write".equals(p.get("code"))).findFirst().orElseThrow();
+        assertEquals("扩展与配置",extension.get("module"));assertTrue(bool(extension,"headquartersOnly"));
+        assertEquals(List.of("integrations:read"),extension.get("requires"));
     }
 }
