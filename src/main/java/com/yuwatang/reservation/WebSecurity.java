@@ -20,7 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 class WebSecurity implements WebMvcConfigurer {
     final AuthService auth;final String dataDir; final Map<String,Window> limits=Caffeine.newBuilder().maximumSize(100000).expireAfterWrite(java.time.Duration.ofMinutes(2)).<String,Window>build().asMap();
     record Window(long minute,AtomicInteger count){}
-    WebSecurity(AuthService auth,@Value("${app.data-dir}")String dir){this.auth=auth;dataDir=dir;}
+    final LaunchMode launchMode;
+    WebSecurity(AuthService auth,@Value("${app.data-dir}")String dir,LaunchMode launchMode){this.auth=auth;dataDir=dir;this.launchMode=launchMode;}
     @Override public void addInterceptors(InterceptorRegistry registry){registry.addInterceptor(new HandlerInterceptor(){@Override public boolean preHandle(HttpServletRequest req,HttpServletResponse res,Object handler){
         res.setHeader("X-Content-Type-Options","nosniff");res.setHeader("Referrer-Policy",req.getRequestURI().startsWith("/api/chat-media/")?"no-referrer":"same-origin");
         if(req.getRequestURI().startsWith("/api/")){
@@ -36,6 +37,7 @@ class WebSecurity implements WebMvcConfigurer {
             int ceiling=bucket.equals("login")?20:bucket.equals("lookup")?30:identity.equals(req.getRemoteAddr())?6000:600;
             if(w.count.incrementAndGet()>ceiling){res.setHeader("Retry-After","60");throw Data.error(429,"请求较频繁，请稍后再试。");}
         }
+        launchMode.check(req);
         if(req.getRequestURI().startsWith("/api/admin/")&&!req.getRequestURI().equals("/api/admin/login")){
             Admin a=auth.admin(req);if(handler instanceof HandlerMethod method){Permit p=method.getMethodAnnotation(Permit.class);if(p==null)throw Data.error(403,"接口未授权。");a.require(p.value());}else throw Data.error(404,"接口不存在。");
         }return true;
@@ -49,6 +51,7 @@ class WebSecurity implements WebMvcConfigurer {
 }
 @RestControllerAdvice
 class ApiErrors {
+    @ExceptionHandler(ConstructionModeException.class) ResponseEntity<?> construction(ConstructionModeException e){return ResponseEntity.status(423).header("Cache-Control","no-store").body(Map.of("code","MINIPROGRAM_UNDER_CONSTRUCTION","message",e.getMessage(),"launchStatus",e.status));}
     @ExceptionHandler(ResponseStatusException.class) ResponseEntity<?> status(ResponseStatusException e){return ResponseEntity.status(e.getStatusCode()).body(Map.of("message",Objects.requireNonNullElse(e.getReason(),"请求未完成。")));}
     @ExceptionHandler({IllegalArgumentException.class,java.time.DateTimeException.class,org.springframework.http.converter.HttpMessageNotReadableException.class}) ResponseEntity<?> bad(Exception e){return ResponseEntity.badRequest().body(Map.of("message","数据格式不正确，请检查后重新提交。"));}
     @ExceptionHandler({org.springframework.dao.TransientDataAccessException.class,org.springframework.transaction.TransactionTimedOutException.class}) ResponseEntity<?> busy(Exception e){return ResponseEntity.status(503).header("Retry-After","2").body(Map.of("message","当前访问较多，请稍后重试；重复提交请沿用原提交标识。"));}
