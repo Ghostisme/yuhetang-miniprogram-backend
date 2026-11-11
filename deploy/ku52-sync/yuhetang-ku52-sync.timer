@@ -1,0 +1,10 @@
+[Unit]
+Description=Poll due YU Health member sync jobs every minute
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+Unit=yuhetang-ku52-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=YU Health read-only member card and consumption sync
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/yuhetang-ku52-sync
+ExecStart=/opt/yuhetang-ku52-sync/.venv/bin/python -B /opt/yuhetang-ku52-sync/worker.py --config /etc/yuhetang-ku52-sync/config.json --max-jobs 2
+TimeoutStartSec=1500
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/yuhetang-ku52-sync
+MemoryMax=1G
+CPUQuota=50%
