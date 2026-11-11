@@ -9,14 +9,14 @@ import static com.yuwatang.reservation.Data.*;
 @RestController
 class ChatApi {
     private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(ChatApi.class);
-    final ChatService chat;final AuthService auth;final WechatMessageCodec codec;
-    ChatApi(ChatService c,AuthService a,WechatMessageCodec w){chat=c;auth=a;codec=w;}
+    final ChatService chat;final AuthService auth;final WechatMessageCodec codec;final ChatAttachments attachments;
+    ChatApi(ChatService c,AuthService a,WechatMessageCodec w,ChatAttachments attachments){chat=c;auth=a;codec=w;this.attachments=attachments;}
     @GetMapping(value="/api/wechat/customer-service",produces="text/plain")String verify(@RequestParam String signature,@RequestParam String timestamp,@RequestParam String nonce,@RequestParam String echostr){codec.verify(signature,timestamp,nonce,null);if(echostr.length()>1000)throw error(400,"校验内容过长。");return echostr;}
     @PostMapping(value="/api/wechat/customer-service",produces="text/plain")String receive(@RequestBody String body,@RequestParam(required=false)String signature,@RequestParam(required=false)String msg_signature,@RequestParam String timestamp,@RequestParam String nonce){
         String type="unverified",event="unverified";
         try{
             var payload=codec.decode(body,signature,msg_signature,timestamp,nonce);
-            type=diagnosticValue(str(payload,"MsgType"),Set.of("text","image","miniprogrampage","event"));
+            type=diagnosticValue(str(payload,"MsgType"),Set.of("text","image","video","miniprogrampage","event"));
             event=diagnosticValue(str(payload,"Event"),Set.of("user_enter_tempsession","yht_diagnostic_probe"));
             String outcome=chat.receive(payload);
             log.info("WeChat callback type={} event={} outcome={}",type,event,outcome);
@@ -40,6 +40,12 @@ class ChatApi {
     @PostMapping("/api/admin/chats/{id}/end")@Permit("chat:reply")Map<String,Object> end(HttpServletRequest r,@PathVariable String id){return chat.end(auth.admin(r),id);}
     @PostMapping("/api/admin/chats/{id}/release")@Permit("chat:read")Map<String,Object> release(HttpServletRequest r,@PathVariable String id){return chat.release(auth.admin(r),id);}
     @PostMapping("/api/admin/chats/{id}/messages")@Permit("chat:reply")Map<String,Object> reply(HttpServletRequest r,@PathVariable String id,@RequestBody Map<String,Object> in){return chat.reply(auth.admin(r),id,in);}
+    @PostMapping(value="/api/admin/chats/{id}/attachments",consumes="multipart/form-data")@Permit("chat:reply")Map<String,Object> attachment(HttpServletRequest r,@PathVariable String id,@RequestPart org.springframework.web.multipart.MultipartFile file,@RequestPart(required=false)org.springframework.web.multipart.MultipartFile thumbnail,@RequestParam String clientKey)throws java.io.IOException{
+        var actor=auth.admin(r);chat.scoped(actor,id);
+        return chat.reply(actor,id,Map.of("clientKey",clientKey),attachments.validate(file,thumbnail));
+    }
+    @GetMapping("/api/chat-media/{id}/watch")ResponseEntity<String> attachmentVideo(@PathVariable String id,@RequestParam String ticket){return attachments.watch(id,ticket);}
+    @GetMapping("/api/chat-media/{id}/{part}")ResponseEntity<org.springframework.core.io.Resource> attachmentData(@PathVariable String id,@PathVariable String part,@RequestParam String ticket)throws java.io.IOException{return attachments.read(id,part,ticket);}
     @PatchMapping("/api/admin/chats/{id}/read")@Permit("chat:read")Map<String,Object> read(HttpServletRequest r,@PathVariable String id,@RequestBody Map<String,Object> in){long seq;try{seq=Long.parseLong(str(in,"throughSeq"));}catch(Exception e){throw error(400,"消息序号不正确。");}chat.markRead(auth.admin(r),id,seq);return Map.of("saved",true);}
     @PatchMapping("/api/admin/chats/{id}/status")@Permit("chat:reply")Map<String,Object> status(HttpServletRequest r,@PathVariable String id,@RequestBody Map<String,Object> in){chat.status(auth.admin(r),id,str(in,"status"));return Map.of("saved",true);}
     @PatchMapping("/api/admin/chats/{id}/route")@Permit("chat:route")Map<String,Object> route(HttpServletRequest r,@PathVariable String id,@RequestBody Map<String,Object> in){chat.route(auth.admin(r),id,str(in,"storeId"));return Map.of("saved",true);}

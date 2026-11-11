@@ -27,6 +27,45 @@ class WechatGatewayTest {
     void token(){server.expect(requestTo(tokenUrl)).andExpect(method(HttpMethod.GET))
         .andRespond(withSuccess("{\"access_token\":\"fixture-token\",\"expires_in\":7200}",MediaType.TEXT_PLAIN));}
 
+    void expectMediaUpload(String type,String media){
+        server.expect(requestTo("https://api.weixin.qq.com/cgi-bin/media/upload?access_token=fixture-token&type="+type)).andExpect(method(HttpMethod.POST))
+            .andExpect(request->{
+                var mock=(org.springframework.mock.http.client.MockClientHttpRequest)request;
+                assertEquals(mock.getBodyAsBytes().length,request.getHeaders().getContentLength());
+                assertFalse(request.getHeaders().containsKey("Transfer-Encoding"));
+                assertTrue(request.getHeaders().getContentType().toString().startsWith("multipart/form-data;boundary="));
+                assertTrue(mock.getBodyAsString().contains("name=\"media\""));
+            }).andRespond(withSuccess("{\""+(type.equals("thumb")?"thumb_media_id":"media_id")+"\":\""+media+"\"}",MediaType.TEXT_PLAIN));
+    }
+    @Test void customerVideoDownloadAcceptsBinaryMediaAndRejectsWechatErrors(){
+        token();String url="https://api.weixin.qq.com/cgi-bin/media/get?access_token=fixture-token&media_id=fixture-video";
+        server.expect(requestTo(url)).andRespond(withSuccess(new byte[]{1,2,3},MediaType.APPLICATION_OCTET_STREAM));
+        server.expect(requestTo(url)).andRespond(withSuccess("{\"errcode\":40007}",MediaType.APPLICATION_JSON));
+        assertArrayEquals(new byte[]{1,2,3},gateway.customerVideo("fixture-video"));
+        var error=assertThrows(ResponseStatusException.class,()->gateway.customerVideo("fixture-video"));assertEquals(410,error.getStatusCode().value());server.verify();
+    }
+    @Test void customerImageUploadAndSendUseFixedLengthBodies(){
+        token();expectMediaUpload("image","image-media");
+        server.expect(requestTo(sendUrl)).andExpect(content().json("{\"touser\":\"customer\",\"msgtype\":\"image\",\"image\":{\"media_id\":\"image-media\"}}"))
+            .andRespond(withSuccess("{\"errcode\":0}",MediaType.APPLICATION_JSON));
+        assertEquals(0,gateway.sendCustomerMedia("customer",new ChatAttachments.Upload("image","介绍.png","image/png","png",new byte[]{1,2,3},null,"sha")).get("errcode"));server.verify();
+    }
+    @Test void miniProgramVideoUsesASupportedLinkCardWithFixedLength(){
+        token();var card=Map.of("title","客服发来的视频","description","点击播放","url","https://fixture.example/api/chat-media/fixture/watch?ticket=signed","thumb_url","https://fixture.example/api/chat-media/fixture/thumbnail?ticket=signed");
+        server.expect(requestTo(sendUrl)).andExpect(content().json("{\"touser\":\"customer\",\"msgtype\":\"link\",\"link\":{\"title\":\"客服发来的视频\",\"description\":\"点击播放\",\"url\":\"https://fixture.example/api/chat-media/fixture/watch?ticket=signed\",\"thumb_url\":\"https://fixture.example/api/chat-media/fixture/thumbnail?ticket=signed\"}}"))
+            .andExpect(request->{var mock=(org.springframework.mock.http.client.MockClientHttpRequest)request;assertEquals(mock.getBodyAsBytes().length,request.getHeaders().getContentLength());assertFalse(request.getHeaders().containsKey("Transfer-Encoding"));})
+            .andRespond(withSuccess("{\"errcode\":0}",MediaType.APPLICATION_JSON));
+        assertEquals(0,gateway.sendCustomerVideoCard("customer",card).get("errcode"));server.verify();
+    }
+    @Test void unsupportedNativeVideoIsRejectedBeforeAnyWechatRequest(){
+        assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->gateway.sendCustomerMedia("customer",new ChatAttachments.Upload("video","介绍.mp4","video/mp4","mp4",new byte[]{1},new byte[]{2},"sha")));server.verify();
+    }
+    @Test void rejectedMediaUploadDoesNotSendACustomerMessage(){
+        token();server.expect(requestTo("https://api.weixin.qq.com/cgi-bin/media/upload?access_token=fixture-token&type=image"))
+            .andRespond(withSuccess("{\"errcode\":40004,\"errmsg\":\"private diagnostics\"}",MediaType.APPLICATION_JSON));
+        var failure=assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->gateway.sendCustomerMedia("customer",new ChatAttachments.Upload("image","介绍.png","image/png","png",new byte[]{1},null,"sha")));
+        assertTrue(failure.getMessage().contains("40004"));assertFalse(failure.getMessage().contains("fixture-token"));assertFalse(failure.getMessage().contains("private diagnostics"));server.verify();
+    }
     @Test void phoneAuthorizationUsesTheCodeAndFixedLengthBodyWithMiniProgramCredentials(){
         token();server.expect(requestTo("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=fixture-token"))
             .andExpect(method(HttpMethod.POST)).andExpect(content().json("{\"code\":\"one-use-code\"}"))

@@ -46,7 +46,7 @@ class CustomerProfiles {
         result.put("memberStoreId",stores.isEmpty()?"":home);result.put("memberStoreName",stores.isEmpty()?"":str(stores.get(0),"name"));
         result.put("crossStoreBookingSupported",true);
         result.put("sources",pid.isBlank()?List.of("MINIPROGRAM"):sources(d,pid));
-        result.put("complete",verified&&!name.isBlank());result.put("firstLoginAt",account.get("firstLoginAt"));
+        result.put("complete",verified&&!str(account,"displayName").isBlank()&&!str(account,"profileConsentAt").isBlank());result.put("firstLoginAt",account.get("firstLoginAt"));
         result.put("lastLoginAt",account.get("lastLoginAt"));result.put("development",bool(account,"isDevelopment"));
         return result;
     }

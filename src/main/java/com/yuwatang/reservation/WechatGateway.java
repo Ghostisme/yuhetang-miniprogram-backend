@@ -129,6 +129,47 @@ public class WechatGateway {
         try{token=access(false);}catch(ResponseStatusException e){throw new CustomerSendNotAttemptedException("消息尚未提交微信："+e.getReason());}
         return post("https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+enc(token),Map.of("touser",openid,"msgtype","text","text",Map.of("content",content)));
     }
+    Map<String,Object> sendCustomerMedia(String openid,ChatAttachments.Upload upload){
+        if(!upload.kind().equals("image"))throw new CustomerSendNotAttemptedException("小程序微信客服视频需通过播放卡片发送。");
+        String token,media;
+        try{
+            token=access(false);
+            media=uploadCustomerMedia(token,upload.kind(),upload.bytes(),upload.mime(),"attachment."+upload.extension());
+        }catch(ResponseStatusException e){throw new CustomerSendNotAttemptedException("附件尚未发送给客户："+e.getReason());}
+        var payload=new LinkedHashMap<String,Object>();payload.put("media_id",media);
+        return post("https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+enc(token),Map.of("touser",openid,"msgtype",upload.kind(),upload.kind(),payload));
+    }
+    Map<String,Object> sendCustomerVideoCard(String openid,Map<String,String> card){
+        // Mini-program customer service supports link cards, not the official-account video type.
+        String token;
+        try{token=access(false);}catch(ResponseStatusException e){throw new CustomerSendNotAttemptedException("视频尚未发送给客户："+e.getReason());}
+        return post("https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+enc(token),Map.of("touser",openid,"msgtype","link","link",card));
+    }
+    String uploadCustomerMedia(String token,String kind,byte[] bytes,String mime,String filename){
+        // Serialize multipart explicitly too: WeChat rejects chunked request bodies with HTTP 412.
+        String boundary="yht"+UUID.randomUUID().toString().replace("-","");
+        var out=new java.io.ByteArrayOutputStream();
+        try{
+            out.write(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"media\"; filename=\""+filename+"\"\r\nContent-Type: "+mime+"\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            out.write(bytes);out.write(("\r\n--"+boundary+"--\r\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        }catch(java.io.IOException e){throw new ExchangeException("INVALID_REQUEST","微信附件内容无法生成。");}
+        byte[] body=out.toByteArray();Map<String,Object> result;
+        try{result=response(http.post().uri("https://api.weixin.qq.com/cgi-bin/media/upload?access_token="+enc(token)+"&type="+enc(kind))
+            .contentType(MediaType.parseMediaType("multipart/form-data; boundary="+boundary)).contentLength(body.length).body(body).retrieve().body(byte[].class));}
+        catch(RestClientException e){throw transportFailure(e);}
+        int code=integer(result,"errcode",0);String media=str(result,"media_id");if(kind.equals("thumb")&&media.isBlank())media=str(result,"thumb_media_id");
+        if(code!=0)throw error(502,"微信素材上传失败。"+failureReason(code));
+        if(media.isBlank())throw error(502,"微信素材上传未返回素材标识，请重新选择附件。");
+        return media;
+    }
     byte[] customerImage(String mediaId){try{var response=http.get().uri("https://api.weixin.qq.com/cgi-bin/media/get?access_token="+enc(access(false))+"&media_id="+enc(mediaId)).retrieve().toEntity(byte[].class);byte[] bytes=response.getBody();String type=Objects.toString(response.getHeaders().getContentType(),"");if(bytes==null||bytes.length>10*1024*1024||!type.startsWith("image/"))throw error(410,"微信图片已过期或暂不可用。");return bytes;}catch(org.springframework.web.client.RestClientException e){throw error(502,"图片读取失败，请稍后重试。");}}
     static String enc(String text){return java.net.URLEncoder.encode(text,java.nio.charset.StandardCharsets.UTF_8);}
+    byte[] customerVideo(String mediaId){
+        try{
+            var response=http.get().uri("https://api.weixin.qq.com/cgi-bin/media/get?access_token="+enc(access(false))+"&media_id="+enc(mediaId)).retrieve().toEntity(byte[].class);
+            byte[] bytes=response.getBody();String type=Objects.toString(response.getHeaders().getContentType(),"");
+            if(bytes==null||bytes.length>ChatAttachments.VIDEO_LIMIT||!(type.startsWith("video/")||type.startsWith("application/octet-stream")))throw error(410,"微信视频已过期或暂不可用。");
+            return bytes;
+        }catch(RestClientException e){throw error(502,"视频读取失败，请稍后重试。");}
+    }
 }

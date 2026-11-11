@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest(properties={
     "spring.datasource.url=jdbc:h2:mem:yht_store_chat_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=15000",
     "spring.datasource.username=sa","spring.datasource.password=",
-    "app.mode=local","app.data-dir=target/isolated-chat-test-data",
+    "app.mode=local","app.data-dir=target/isolated-chat-test-data","app.public-url=https://fixture.example",
     "app.jwt-secret=isolated-chat-tests-only-secret-more-than-32-characters",
     "app.admin-password=Yht@9800dev","app.pms.enabled=false",
     "app.wechat.app-id=wx-chat-test","app.wechat.secret=",
@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StoreChatIntegrationTest {
     @Autowired MockMvc mvc; @Autowired Data d; @Autowired AuthService auth;
-    @Autowired CatalogService catalog; @Autowired ChatService chat;
+    @Autowired CatalogService catalog; @Autowired ChatService chat; @Autowired CustomerProfiles profiles; @Autowired ChatAttachments attachments;
     @Autowired WechatMessageCodec codec; @Autowired WebSecurity security;
     @MockitoBean WechatGateway wx;
     String customer, customerToken, otherCustomerToken, openid, hq, manager, otherStore;
@@ -61,6 +61,10 @@ class StoreChatIntegrationTest {
         openid="chat-test-"+id();customerToken=str(auth.customerSession(openid,true),"token");
         customer=str(d.one("SELECT id FROM customer_identity WHERE openid=?",openid),"id");
         otherCustomerToken=str(auth.customerSession("another-"+id(),true),"token");
+        String code=id();when(wx.phoneNumber(code)).thenReturn("13900009101");profiles.phone(customer,Map.of("name","咨询测试客户","code",code,"consent",true));
+        String other=str(d.one("SELECT identity_id FROM customer_account WHERE identity_id<>? ORDER BY last_login_at DESC LIMIT 1",customer),"identityId");
+        code=id();when(wx.phoneNumber(code)).thenReturn("13900009102");profiles.phone(other,Map.of("name","另一客户","code",code,"consent",true));
+        clearInvocations(wx);
         hq=adminToken("hq");manager=adminToken("yuyao-manager");otherStore=adminToken("bai-manager");
         when(wx.sendCustomerText(anyString(),anyString())).thenReturn(Map.of("errcode",0));
     }
@@ -134,6 +138,109 @@ class StoreChatIntegrationTest {
     String directNativeEntry(String source,long time)throws Exception{
         var event=inbound("event",time);event.put("Event","user_enter_tempsession");event.put("SessionFrom",source);callback(event,200);
         return str(d.one("SELECT conversation_id FROM chat_route WHERE openid=?",openid),"conversationId");
+    }
+    byte[] chatPicture()throws Exception{
+        var image=new java.awt.image.BufferedImage(8,8,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(image,"png",out);return out.toByteArray();
+    }
+    Map<String,Object> uploadChat(String cid,String token,String key,String filename,byte[] bytes,int status)throws Exception{
+        var request=multipart("/api/admin/chats/"+cid+"/attachments").file(new org.springframework.mock.web.MockMultipartFile("file",filename,"application/octet-stream",bytes)).param("clientKey",key);
+        if(token!=null)request.header("Authorization","Bearer "+token);
+        return json(mvc.perform(request),status);
+    }
+    @Test void chatPicturesArePrivatePreviewableAndVisibleToTheOwningCustomer()throws Exception{
+        String cid=web("yuyao");accept(cid);byte[] bytes=chatPicture();
+        var sent=uploadChat(cid,manager,id(),"门店介绍.png",bytes,200);var attachment=d.object(sent.get("attachment"));
+        assertEquals("image",sent.get("kind"));assertEquals("SENT",sent.get("deliveryStatus"));assertEquals("门店介绍.png",attachment.get("name"));
+        assertArrayEquals(bytes,mvc.perform(get(str(attachment,"url"))).andReturn().getResponse().getContentAsByteArray());
+        var mine=items(json(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),200));
+        assertEquals("门店介绍.png",d.object(mine.get(0).get("attachment")).get("name"));
+        assertFalse(d.stringify(mine).contains("chat-private"));assertFalse(d.stringify(mine).contains("attachmentJson"));assertFalse(d.stringify(mine).contains("mediaId"));
+        response(send(get("/api/me/chats/"+cid+"/messages"),otherCustomerToken,null),404);
+        response(send(get("/api/admin/chats/"+cid+"/messages"),otherStore,null),404);
+        var meta=d.object(d.one("SELECT attachment_json FROM chat_message WHERE id=?",sent.get("id")).get("attachmentJson"));
+        assertEquals(404,mvc.perform(get("/uploads/chat-private/"+str(meta,"file"))).andReturn().getResponse().getStatus());
+        assertEquals(403,mvc.perform(get(str(attachment,"url").replace(str(sent,"id"),id()))).andReturn().getResponse().getStatus());
+        verify(wx,never()).sendCustomerMedia(anyString(),any());
+    }
+    @Test void attachmentRetryUsesOneMessageAndRejectsChangedContents()throws Exception{
+        String cid=web("yuyao"),key=id();accept(cid);byte[] bytes=chatPicture();
+        var first=uploadChat(cid,manager,key,"介绍.png",bytes,200);var again=uploadChat(cid,manager,key,"介绍.png",bytes,200);
+        assertEquals(first.get("id"),again.get("id"));assertEquals(1,d.count("SELECT COUNT(*) FROM chat_message WHERE conversation_id=?",cid));
+        uploadChat(cid,manager,key,"改名.png",bytes,409);
+        json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        assertEquals(first.get("id"),uploadChat(cid,manager,key,"介绍.png",bytes,200).get("id"));
+    }
+    @Test void attachmentsRequireReceptionOwnershipAndValidMedia()throws Exception{
+        String cid=web("yuyao");byte[] bytes=chatPicture();
+        uploadChat(cid,manager,id(),"介绍.png",bytes,409);uploadChat(cid,otherStore,id(),"介绍.png",bytes,404);uploadChat(cid,null,id(),"介绍.png",bytes,401);
+        accept(cid);uploadChat(cid,hq,id(),"介绍.png",bytes,409);
+        uploadChat(cid,manager,id(),"伪造.jpg","<html>invalid</html>".getBytes(StandardCharsets.UTF_8),400);
+        uploadChat(cid,manager,id(),"损坏.png",Arrays.copyOf(bytes,12),400);
+        byte[] large=Arrays.copyOf(bytes,2*1024*1024+1);uploadChat(cid,manager,id(),"过大.png",large,400);
+        assertEquals(0,d.count("SELECT COUNT(*) FROM chat_message WHERE conversation_id=?",cid));
+        json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);uploadChat(cid,manager,id(),"介绍.png",bytes,409);
+    }
+    @Test void wechatMediaConsumesOneReplyAndDoesNotRepeatOnRetry()throws Exception{
+        String cid=nativeEntry("yuyao",epoch()),key=id();accept(cid);
+        when(wx.sendCustomerMedia(eq(openid),any())).thenReturn(Map.of("errcode",0));
+        var sent=uploadChat(cid,manager,key,"介绍.png",chatPicture(),200);
+        assertEquals("SENT",sent.get("deliveryStatus"));assertEquals(1,integer(conversation(cid),"replyRemaining",-1));
+        assertEquals(sent.get("id"),uploadChat(cid,manager,key,"介绍.png",chatPicture(),200).get("id"));
+        verify(wx,times(1)).sendCustomerMedia(eq(openid),any());
+    }
+    @Test void uploadFailureBeforeWechatSendRestoresQuotaAndKeepsFailureVisible()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());accept(cid);
+        when(wx.sendCustomerMedia(eq(openid),any())).thenThrow(new WechatGateway.CustomerSendNotAttemptedException("附件尚未发送给客户：素材上传失败。"));
+        var sent=uploadChat(cid,manager,id(),"介绍.png",chatPicture(),200);
+        assertEquals("FAILED",sent.get("deliveryStatus"));assertTrue(str(sent,"errorMessage").contains("素材上传失败"));assertEquals(2,integer(conversation(cid),"replyRemaining",-1));
+        assertTrue(sent.containsKey("attachment"));
+    }
+    @Test void videoAttachmentHasCoverAndSupportsPartialPlayback()throws Exception{
+        String cid=web("yuyao");accept(cid);
+        byte[] bytes=ByteBuffer.allocate(40).putInt(16).put("ftypisom".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("mdat".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("moov".getBytes(StandardCharsets.US_ASCII)).putInt(0).array();
+        var sent=uploadChat(cid,manager,id(),"门店视频.mp4",bytes,200);var attachment=d.object(sent.get("attachment"));
+        assertEquals("video",sent.get("kind"));assertTrue(str(attachment,"thumbnailUrl").startsWith("/api/chat-media/"));
+        var response=mvc.perform(get(str(attachment,"url")).header("Range","bytes=0-15")).andReturn().getResponse();
+        assertEquals(206,response.getStatus());assertEquals("video/mp4",response.getContentType());assertArrayEquals(Arrays.copyOf(bytes,16),response.getContentAsByteArray());
+        var poster=mvc.perform(get(str(attachment,"thumbnailUrl"))).andReturn().getResponse();assertEquals(200,poster.getStatus());assertNotNull(javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(poster.getContentAsByteArray())));
+    }
+    @Test void nativeVideoCardOpensASignedPlayerAndRetriesDoNotResend()throws Exception{
+        String cid=nativeEntry("yuyao",epoch()),key=id();accept(cid);
+        byte[] bytes=ByteBuffer.allocate(40).putInt(16).put("ftypisom".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("mdat".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("moov".getBytes(StandardCharsets.US_ASCII)).putInt(0).array();
+        when(wx.sendCustomerVideoCard(eq(openid),anyMap())).thenReturn(Map.of("errcode",0));
+        var sent=uploadChat(cid,manager,key,"门店视频.mp4",bytes,200);assertEquals("SENT",sent.get("deliveryStatus"));
+        var card=attachments.videoCard(str(sent,"id"));assertTrue(card.get("url").startsWith("https://fixture.example/api/chat-media/"));
+        var page=mvc.perform(get(card.get("url"))).andReturn().getResponse();assertEquals(200,page.getStatus());
+        assertTrue(page.getContentType().startsWith("text/html"));assertTrue(page.getContentAsString().contains("<video controls playsinline"));assertEquals("no-referrer",page.getHeader("Referrer-Policy"));
+        assertTrue(page.getContentAsString(StandardCharsets.UTF_8).contains("客服发来的视频"));
+        assertEquals(200,mvc.perform(get(card.get("thumb_url"))).andReturn().getResponse().getStatus());
+        assertEquals(403,mvc.perform(get(card.get("url").replace(str(sent,"id"),id()))).andReturn().getResponse().getStatus());
+        assertEquals(403,mvc.perform(get(card.get("url").replace("/watch?","/file?"))).andReturn().getResponse().getStatus());
+        assertEquals(sent.get("id"),uploadChat(cid,manager,key,"门店视频.mp4",bytes,200).get("id"));
+        assertEquals(1,integer(conversation(cid),"replyRemaining",-1));verify(wx,times(1)).sendCustomerVideoCard(eq(openid),anyMap());verify(wx,never()).sendCustomerMedia(anyString(),any());
+    }
+    @Test void nativeVideoRequiresAnHttpsOriginWithoutExposingPrivateConfiguration(){
+        for(String origin:List.of("","http://fixture.example","https://name:secret@fixture.example","https://fixture.example/admin","https://fixture.example?token=secret")){
+            var media=new ChatAttachments(d,auth,wx,"target/isolated-chat-test-data",origin);
+            var failure=assertThrows(WechatGateway.CustomerSendNotAttemptedException.class,()->media.videoCard("fixture"));assertTrue(failure.getMessage().contains("PUBLIC_URL"));assertFalse(failure.getMessage().contains("secret"));
+        }
+    }
+    @Test void incomingWechatPicturesArePreviewedAndCachedInPrivateStorage()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());var in=inbound("image",epoch());in.put("MsgId","preview-image-"+id());in.put("MediaId","preview-media");callback(in,200);
+        when(wx.customerImage("preview-media")).thenReturn(chatPicture());
+        var rows=items(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200));String url=str(d.object(rows.get(0).get("attachment")),"url");
+        assertEquals(200,mvc.perform(get(url)).andReturn().getResponse().getStatus());assertEquals(200,mvc.perform(get(url)).andReturn().getResponse().getStatus());
+        verify(wx,times(1)).customerImage("preview-media");
+    }
+    @Test void incomingWechatVideosAreStoredPreviewableAndCachedOnce()throws Exception{
+        String cid=nativeEntry("yuyao",epoch());var in=inbound("video",epoch());in.put("MsgId","preview-video-"+id());in.put("MediaId","preview-video-media");callback(in,200);
+        byte[] bytes=ByteBuffer.allocate(40).putInt(16).put("ftypisom".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("mdat".getBytes(StandardCharsets.US_ASCII)).putInt(0).putInt(12).put("moov".getBytes(StandardCharsets.US_ASCII)).putInt(0).array();
+        when(wx.customerVideo("preview-video-media")).thenReturn(bytes);
+        var rows=items(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200));assertEquals("video",rows.get(0).get("kind"));var media=d.object(rows.get(0).get("attachment"));
+        var poster=mvc.perform(get(str(media,"thumbnailUrl"))).andReturn().getResponse();assertEquals(200,poster.getStatus());assertEquals("image/jpeg",poster.getContentType());
+        var response=mvc.perform(get(str(media,"url")).header("Range","bytes=0-15")).andReturn().getResponse();assertEquals(206,response.getStatus());assertArrayEquals(Arrays.copyOf(bytes,16),response.getContentAsByteArray());
+        verify(wx,times(1)).customerVideo("preview-video-media");assertEquals(5,integer(conversation(cid),"replyRemaining",-1));
     }
     String signature(String timestamp,String nonce,String encrypted)throws Exception{
         var values=new ArrayList<>(List.of("isolated-callback-token",timestamp,nonce));if(encrypted!=null)values.add(encrypted);Collections.sort(values);
@@ -288,17 +395,66 @@ class StoreChatIntegrationTest {
         assertEquals(100,older.size());assertEquals("批次消息104",older.get(99).get("content"));
     }
 
-    @Test void directNativeContactWorksBeforeLoginAndRepliesThroughWechat()throws Exception{
+    @Test void nativeContactRequiresACompletedAuthorizedCustomerAndNeverTrustsSessionFrom()throws Exception{
         openid="native-guest-"+id();
-        String cid=directNativeEntry("yht-store:yuyao",epoch());
-        assertEquals("WECHAT",conversation(cid).get("channel"));assertEquals("yuyao",conversation(cid).get("storeId"));
-        assertEquals(0,d.count("SELECT COUNT(*) FROM customer_identity WHERE openid=?",openid));
-        assertEquals(0,d.count("SELECT COUNT(*) FROM chat_entry"));assertEquals(0,d.count("SELECT COUNT(*) FROM chat_conversation WHERE channel='WEB'"));
-        nativeText("微信里咨询本店项目",epoch(),"native-direct-001");nativeText("微信里咨询本店项目",epoch(),"native-direct-001");
-        assertEquals(1,items(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200)).size());
-        response(send(get("/api/admin/chats/"+cid+"/messages"),otherStore,null),404);
-        assertEquals("SENT",reply(cid,"您好，余姚店为您服务",id()).get("deliveryStatus"));
-        verify(wx,times(1)).sendCustomerText(openid,"您好，余姚店为您服务");
+        var event=inbound("event",epoch());event.put("Event","user_enter_tempsession");event.put("SessionFrom","yht-store:yuyao");
+        callback(event,200);nativeText("未授权的文字",epoch(),"guest-message-001");
+        assertEquals(0,d.count("SELECT COUNT(*) FROM chat_conversation"));assertEquals(0,d.count("SELECT COUNT(*) FROM chat_receipt"));
+        assertEquals(0,d.count("SELECT COUNT(*) FROM chat_message"));verifyNoInteractions(wx);
+    }
+
+    @Test void chatEndpointsRequirePhoneNameAndConsentEvenWhenCallingTheApiDirectly()throws Exception{
+        String cid=web("yuyao");
+        response(send(post("/api/me/chats"),null,Map.of("storeId","yuyao")),401);
+        for(String column:List.of("phone_verified_at","profile_consent_at","display_name")){
+            String old=str(d.one("SELECT "+column+" previous_value FROM customer_account WHERE identity_id=?",customer),"previousValue");
+            d.update("UPDATE customer_account SET "+column+"=? WHERE identity_id=?","display_name".equals(column)?"":null,customer);
+            response(send(post("/api/me/chats"),customerToken,Map.of("storeId","yuyao")),403);
+            response(send(post("/api/me/chat/entry"),customerToken,Map.of("storeId","yuyao")),403);
+            response(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),403);
+            response(send(post("/api/me/chats/"+cid+"/messages"),customerToken,message("绕过界面",id())),403);
+            response(send(post("/api/me/chats/"+cid+"/restart"),customerToken,null),403);
+            d.update("UPDATE customer_account SET "+column+"=? WHERE identity_id=?",old,customer);
+        }
+        assertEquals(0,d.count("SELECT COUNT(*) FROM chat_message"));
+    }
+
+    @Test void legacyAnonymousChatRemainsHistoryButCannotBeAcceptedOrRepliedToUntilAuthorized()throws Exception{
+        String cid=web("yuyao");webSend(cid,"保留历史消息",id());
+        String consent=str(d.one("SELECT profile_consent_at previous_value FROM customer_account WHERE identity_id=?",customer),"previousValue");
+        d.update("UPDATE customer_account SET profile_consent_at=NULL WHERE identity_id=?",customer);
+        var denied=d.object(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200).get("conversation"));
+        assertEquals(false,d.object(denied.get("customer")).get("profileComplete"));assertEquals(false,denied.get("canAccept"));
+        response(send(post("/api/admin/chats/"+cid+"/accept"),manager,null),403);
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("不能继续匿名对话",id())),403);
+        assertEquals(1,d.count("SELECT COUNT(*) FROM chat_message WHERE conversation_id=?",cid));
+        d.update("UPDATE customer_account SET profile_consent_at=? WHERE identity_id=?",consent,customer);accept(cid);
+        d.update("UPDATE customer_account SET profile_consent_at=NULL WHERE identity_id=?",customer);
+        var active=d.object(json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200).get("conversation"));
+        assertEquals(false,active.get("canReply"));assertEquals(true,active.get("canEnd"));
+        response(send(post("/api/admin/chats/"+cid+"/messages"),manager,message("已接入仍不能绕过",id())),403);
+        json(send(post("/api/admin/chats/"+cid+"/end"),manager,null),200);
+        assertEquals("RESOLVED",conversation(cid).get("status"));verifyNoInteractions(wx);
+    }
+
+    @Test void adminChatShowsVerifiedIdentityMembershipAndSearchesByPhoneWithoutLeakingToCustomer()throws Exception{
+        String cid=web("yuyao");webSend(cid,"咨询项目",id());
+        String pid=str(d.one("SELECT customer_profile_id FROM customer_account WHERE identity_id=?",customer),"customerProfileId");
+        d.update("UPDATE customer_profile SET member_verified=TRUE,member_grade='金卡会员' WHERE id=?",pid);
+        var page=json(send(get("/api/admin/chats").param("q","13900009101"),manager,null),200);
+        assertEquals(1,integer(page,"total",0));
+        var item=items(page).get(0);assertFalse(item.containsKey("openid"));
+        var details=json(send(get("/api/admin/chats/"+cid+"/messages"),manager,null),200);
+        var customerInfo=d.object(d.object(details.get("conversation")).get("customer"));
+        assertEquals("咨询测试客户",customerInfo.get("name"));assertEquals("13900009101",customerInfo.get("phone"));
+        assertEquals(true,customerInfo.get("phoneVerified"));assertEquals(true,customerInfo.get("memberVerified"));
+        assertEquals("金卡会员",customerInfo.get("memberGrade"));assertTrue(d.strings(customerInfo.get("sources")).contains("MINIPROGRAM"));
+        var mine=d.object(json(send(get("/api/me/chats/"+cid+"/messages"),customerToken,null),200).get("conversation"));
+        assertFalse(mine.containsKey("customer"));assertFalse(d.stringify(mine).contains("13900009101"));
+        String nativeId=nativeEntry("yuyao",epoch());nativeText("微信咨询",epoch(),"identified-native-001");
+        var nativeInfo=d.object(d.object(json(send(get("/api/admin/chats/"+nativeId+"/messages"),manager,null),200).get("conversation")).get("customer"));
+        assertEquals(customerInfo,nativeInfo);
+        response(send(get("/api/admin/chats/"+nativeId+"/messages"),otherStore,null),404);
     }
 
     @Test void directNativeStoreSwitchKeepsHistoryAndCanReturnToHeadquarters()throws Exception{

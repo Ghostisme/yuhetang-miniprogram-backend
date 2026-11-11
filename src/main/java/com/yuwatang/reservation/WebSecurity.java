@@ -22,7 +22,7 @@ class WebSecurity implements WebMvcConfigurer {
     record Window(long minute,AtomicInteger count){}
     WebSecurity(AuthService auth,@Value("${app.data-dir}")String dir){this.auth=auth;dataDir=dir;}
     @Override public void addInterceptors(InterceptorRegistry registry){registry.addInterceptor(new HandlerInterceptor(){@Override public boolean preHandle(HttpServletRequest req,HttpServletResponse res,Object handler){
-        res.setHeader("X-Content-Type-Options","nosniff");res.setHeader("Referrer-Policy","same-origin");
+        res.setHeader("X-Content-Type-Options","nosniff");res.setHeader("Referrer-Policy",req.getRequestURI().startsWith("/api/chat-media/")?"no-referrer":"same-origin");
         if(req.getRequestURI().startsWith("/api/")){
             res.setHeader("Cache-Control","no-store");long minute=System.currentTimeMillis()/60000;
             String bucket=req.getRequestURI().contains("login")?"login":(req.getRequestURI().contains("shared-lookup")?"lookup":"api");String key=req.getRemoteAddr()+":"+bucket;
@@ -40,7 +40,12 @@ class WebSecurity implements WebMvcConfigurer {
             Admin a=auth.admin(req);if(handler instanceof HandlerMethod method){Permit p=method.getMethodAnnotation(Permit.class);if(p==null)throw Data.error(403,"接口未授权。");a.require(p.value());}else throw Data.error(404,"接口不存在。");
         }return true;
     }});}
-    @Override public void addResourceHandlers(ResourceHandlerRegistry registry){registry.addResourceHandler("/uploads/**").addResourceLocations(Path.of(dataDir,"uploads").toAbsolutePath().toUri().toString()+"/");}
+    @Override public void addResourceHandlers(ResourceHandlerRegistry registry){registry.addResourceHandler("/uploads/**").addResourceLocations(Path.of(dataDir,"uploads").toAbsolutePath().toUri().toString()+"/").resourceChain(true).addResolver(new org.springframework.web.servlet.resource.PathResourceResolver(){
+        @Override protected org.springframework.core.io.Resource getResource(String path,org.springframework.core.io.Resource location)throws java.io.IOException{
+            if(path.equals("chat-private")||path.startsWith("chat-private/"))return null;
+            return super.getResource(path,location);
+        }
+    });}
 }
 @RestControllerAdvice
 class ApiErrors {
