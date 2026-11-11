@@ -19,6 +19,9 @@ docs/*-result.json
 !docs/capacity-*-result.json
 docs/restart-*.json
 target-api/
+target-consumption/
+target-chat-access/
+target-chat-attachments/
 target-wechat-menu/
 target-notifications/
 target-chat-lifecycle/

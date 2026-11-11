@@ -40,6 +40,7 @@ class Bootstrap implements CommandLineRunner {
         d.update("INSERT INTO app_setting VALUES(?,?)",key,d.stringify(mapping));
     }
     static final String[][] PERMISSIONS={
+        {"wallets:read","查看本店会员余额与流水","会员余额"},{"wallets:write","登记本店会员充值与消费","会员余额"},{"wallets:opening","录入期初余额与冲正（总部）","会员余额"},
         {"payments:read","查看本店结算预留","预约管理"},{"payments:write","维护本店结算预留","预约管理"},
         {"wechat-menu:read","查看服务号菜单（总部）","服务号菜单"},{"wechat-menu:write","编辑服务号菜单草稿（总部）","服务号菜单"},{"wechat-menu:publish","发布服务号菜单（总部）","服务号菜单"},
         {"services:read","查看本店养护项目","品牌与内容"},{"services:write","维护本店养护项目","品牌与内容"},{"chat:read","查看客户会话","客服"},{"chat:reply","回复客户消息","客服"},{"chat:route","总部客服分流","客服"},
@@ -73,8 +74,8 @@ class Bootstrap implements CommandLineRunner {
         String pwd=password;if(pwd.isEmpty()){if(!auth.local)throw new IllegalStateException("Set ADMIN_PASSWORD before the first production start.");pwd="Yht@9800dev";}
         for(var p:PERMISSIONS)if(d.count("SELECT COUNT(*) FROM permission WHERE code=?",p[0])==0)d.update("INSERT INTO permission VALUES(?,?,?)",(Object[])p);
         role("hq","总部管理员","GLOBAL",Arrays.stream(PERMISSIONS).map(p->p[0]).toList());
-        role("manager","门店店长","STORE",List.of("payments:read","payments:write","services:read","services:write","chat:read","chat:reply","dashboard:read","appointments:read","appointments:write","appointments:review","appointments:status","appointments:phone","content:read","stores:write","rules:write","therapists:read","therapists:write","customers:read","customers:write","assets:read","assets:write","users:read","users:write","roles:read","notifications:read","notifications:write","audit:read"));
-        role("frontdesk","门店前台","STORE",List.of("payments:read","services:read","services:write","chat:read","chat:reply","dashboard:read","appointments:read","appointments:write","appointments:review","appointments:status","appointments:phone","therapists:read","customers:read","customers:write","notifications:read"));
+        role("manager","门店店长","STORE",List.of("wallets:read","wallets:write","payments:read","payments:write","services:read","services:write","chat:read","chat:reply","dashboard:read","appointments:read","appointments:write","appointments:review","appointments:status","appointments:phone","content:read","stores:write","rules:write","therapists:read","therapists:write","customers:read","customers:write","assets:read","assets:write","users:read","users:write","roles:read","notifications:read","notifications:write","audit:read"));
+        role("frontdesk","门店前台","STORE",List.of("wallets:read","payments:read","services:read","services:write","chat:read","chat:reply","dashboard:read","appointments:read","appointments:write","appointments:review","appointments:status","appointments:phone","therapists:read","customers:read","customers:write","notifications:read"));
         Map<String,Object> site=initialSite();
         site.put("version",1);site.put("sharedLookupEnabled",false);site.put("customerServiceEnabled",true);
         List<Map<String,Object>> stores=new ArrayList<>();String[][] st={{"yuyao","余姚路店","静安区","store-01.webp"},{"bai-le-men","百乐门店","静安区","store-02.webp"},{"huashan","华山路店","静安区","store-03.webp"},{"taikoo","太古汇店","静安区","store-04.webp"},{"wujiang","吴江路店","静安区","store-05.webp"},{"shanghai","上海中心店","浦东新区","store-06.webp"},{"meihua","梅花路店","浦东新区","store-07.webp"},{"sichuan","四川北路店","虹口区","store-08.webp"},{"changde","常德路店","静安区","store-09.webp"}};

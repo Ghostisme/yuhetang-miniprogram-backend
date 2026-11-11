@@ -54,4 +54,17 @@ class WechatMessageCodec {
             return new String(bytes,20,length,StandardCharsets.UTF_8);
         }catch(Exception e){throw error(403,"微信消息解密失败，请检查小程序 AppID 和 EncodingAESKey。");}
     }
+    String encryptedReply(String xml){
+        try{
+            byte[] key=Base64.getDecoder().decode(aesKey+"="),message=xml.getBytes(StandardCharsets.UTF_8),app=appId.getBytes(StandardCharsets.UTF_8),random=new byte[16];
+            new java.security.SecureRandom().nextBytes(random);int length=20+message.length+app.length,pad=32-length%32;
+            var buffer=ByteBuffer.allocate(length+pad).put(random).putInt(message.length).put(message).put(app);
+            for(int i=0;i<pad;i++)buffer.put((byte)pad);
+            var cipher=Cipher.getInstance("AES/CBC/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,new SecretKeySpec(key,"AES"),new IvParameterSpec(Arrays.copyOf(key,16)));
+            String encrypted=Base64.getEncoder().encodeToString(cipher.doFinal(buffer.array())),timestamp=Long.toString(Instant.now().getEpochSecond()),nonce=UUID.randomUUID().toString().replace("-","");
+            var parts=new ArrayList<>(List.of(token,timestamp,nonce,encrypted));Collections.sort(parts);
+            String signature=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-1").digest(String.join("",parts).getBytes(StandardCharsets.UTF_8)));
+            return "<xml><Encrypt><![CDATA["+encrypted+"]]></Encrypt><MsgSignature><![CDATA["+signature+"]]></MsgSignature><TimeStamp>"+timestamp+"</TimeStamp><Nonce><![CDATA["+nonce+"]]></Nonce></xml>";
+        }catch(Exception e){throw error(503,"服务号消息加密配置不完整，请检查服务号 AppID 和 EncodingAESKey。");}
+    }
 }

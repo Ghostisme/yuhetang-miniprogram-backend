@@ -8,8 +8,11 @@ final class RbacPolicy {
     private RbacPolicy() {}
     static final Set<String> HEADQUARTERS_ONLY=Set.of("content:write","content:publish","roles:write",
         "chat:route","customers:master","appointments:export","customers:export","imports:write","integrations:read",
-        "wechat-menu:read","wechat-menu:write","wechat-menu:publish");
+        "wechat-menu:read","wechat-menu:write","wechat-menu:publish","wallets:opening");
     static final Map<String,List<String>> REQUIRES=Map.ofEntries(
+        Map.entry("wallets:read",List.of("customers:read")),
+        Map.entry("wallets:write",List.of("wallets:read","customers:read")),
+        Map.entry("wallets:opening",List.of("wallets:read","wallets:write","customers:read")),
         Map.entry("wechat-menu:write",List.of("wechat-menu:read")),
         Map.entry("wechat-menu:publish",List.of("wechat-menu:read")),
         Map.entry("services:write",List.of("services:read")),
